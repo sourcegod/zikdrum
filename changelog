@@ -1,0 +1,73 @@
+Changelog for zikdrum
+
+-- Version 0.9
+Date: Wed, 06/07/2022
+	Fixing bugs.
+
+
+-- Version 0.8
+Date: Wed, 06/07/2022
+	Adding: factorising and splitting the application in several modules.
+	Adding: audio_device as parameter in commandline.
+
+
+-- Version 0.7
+Date: Mon, 04/07/2022
+	Adding: GroupEvent class, to regroupfunctions for Event Window.
+	Adding: change_one_ev, play_one_ev, select_event, select_note_group.
+
+
+-- Version 0.6
+Date: Thu, 23/06/2022
+	Adding: set_bar, goto_bar, on_goto_bar,
+	and many bugs fix on the MainApp menu.
+
+
+-- Version 0.5
+Date: mardi, 02/01/18
+	Adding:
+MidiBase, MidiSelector, MidiClipboard, MidiTrackEdit object.
+arrange_events_track, copy_track, cut_events_track, erase_eventstrack,
+paste_remplace_to_tracks,
+paste_merge_to_tracks, shift_track_to_zero, shift_events_to_zero, 
+duplicate_evs_obj, duplicate_track_obj, duplicate_seq_obj,
+duplicate_player_obj,
+search_lastpos, delete_events,
+tick2bar, format2bar functions.
+
+Date: samedi, 19/08/17 14/05/48
+-- Version 0.3
+    Date: mercredi, 23/08/17 
+    Note: passing to generate trackline to read dynamically events midi tracks
+    Adding:
+    InterfaceApp, UndoManager, MidiTools, 
+    init_clock, relclock, delete_track, erase_track, print_status, print_info
+    merge_dict, copy_evs, copy_tracks, copy_player, update_length
+    ...
+
+
+--  Version 0.2
+	Update: mercredi, 09/08/17
+	Adding: 
+	save_midi_file, filter, move_notes, delete_notes, log_info
+    ...
+
+--  Version draft:
+    Adding:
+    Miditools, Undomanager, InterfaceApp, merge_dict
+
+
+
+--  Update: mercredi, 09/08/17
+    Sequencer complete with timing scheduler.
+    Mute, solo, filter, ...
+
+    Drum box machine midi with fluidsynth
+    From zikbox.py
+    Version: 0.1
+    
+--    Date: jeudi, 25/08/16    
+    Author:
+    Coolbrother
+
+
