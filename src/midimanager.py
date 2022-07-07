@@ -85,10 +85,10 @@ class MidiFluid(object):
 
 class MidiManager(object):
     """ Midi manager from mido module """
-    def __init__(self):
+    def __init__(self, parent=None):
+        self.parent = parent
         self.synth = MidiFluid()
         self.chan =0
-        self.parent = None
         self.synth_type =1
         self.midi_in = None
         self.midi_out = None

@@ -15,7 +15,7 @@
 
 """
 
-import os, sys
+import sys
 import curses
 import dialog as dlg
 import interfaceapp as intapp
@@ -92,15 +92,6 @@ class MainApp(object):
         self.player = None
         self.iap = None
         self.notifying =0
-        self.bank_lst = ["0 (MSB)", "32 (LSB)"]
-        self.bank_num =0
-        self.preset_lst = range(128)
-        self.msb_preset_num =0
-        self.lsb_preset_num =0
-        self.bank_select_num =0 # result of: (msb_preset_num + msb_preset_num*128)
-        self.bank_select_lst = [0, 128] # bank select allowed
-        self.preset_modified =0
-        self.new_patch_lst = range(128) # empty patch
         self.filename = "/home/com/banks/sf2/FluidR3_GM.sf2"
         # self.filename = "/home/banks/sf2/Yamaha_XG_Sound_Set.sf2"
         # not work with fluidsynth 1.1.6
@@ -116,6 +107,7 @@ class MainApp(object):
         self.win.addstr(3, 0, str(msg))
         self.win.move(3, 0)
         self.win.refresh()
+        # self.beep()
 
     #-------------------------------------------
 
@@ -177,19 +169,6 @@ class MainApp(object):
 
     #-------------------------------------------
 
-    def set_channels(self):
-        """
-        set channel list
-        """
-        
-        self.channel_lst = []
-        for i in range(16):
-            ch = self.iap.midplay.CChannel()
-            ch.chan = i
-            self.channel_lst.append(ch)
-
-    #-------------------------------------------
-
     def get_menu_num(self):
         """ 
         returns menu number
@@ -226,7 +205,6 @@ class MainApp(object):
             msg = "Menu {}".format(menu_name)
         self.display(msg)
 
-
     #-------------------------------------------
 
     def change_menu(self, menu_num, menu_lst, step=0, adding=0):
@@ -254,30 +232,6 @@ class MainApp(object):
 
     #-------------------------------------------
 
-    def change_channel(self, chan_num, step=0, adding=0):
-        """
-        changing channel object list
-        """
-
-        changing =0
-        val =0
-        max_val = len(self.channel_lst) -1
-        if adding == 0:
-            if step == -1:
-                step = max_val
-        else: # adding value
-            val = chan_num + step
-            changing =1
-        if changing:
-            step = uti.limit_value(val, 0, max_val)
-        if chan_num != step:
-            chan_num = step
-        else: # no change for chan num
-            self.beep()
-        
-        return chan_num
-    #-------------------------------------------
-
     def octave_menu(self, step=0, adding=0):
         """
         select octave menu by index
@@ -292,58 +246,33 @@ class MainApp(object):
     def track_menu(self, step=0, adding=0):
         """
         select track menu by index
+        from MainApp object
         """
         
-        self.iap.change_tracknum(step, adding)    
-    
+        msg = self.iap.change_tracknum(step, adding)    
+        self.display(msg)
+
     #-------------------------------------------
 
     def channel_menu(self, step=0, adding=0):
         """
         select channel menu by index
+        from MainApp object
         """
         
-        if not self.channel_lst:
-            self.set_channels()
-        track = self.iap.curseq.get_track()
-        chan_num = track.select_channel(step, adding)
-        
-        # """
-        self.channel_num = self.change_channel(self.channel_num, step, adding)
-        channel_obj = self.channel_lst[self.channel_num]
-        chan_num = channel_obj.chan
-        patch_num = channel_obj.patch
-        self.channel_num = chan_num
-        self.patch_num = patch_num
-        self.iap.midi_man.program_change(chan_num, patch_num)
-        # """
-
-        chan = self.channel_lst[self.channel_num]
-        msg = "Channel : {}".format(chan_num+1)
+        msg = self.iap.change_channel(step, adding)
         self.display(msg)
-
+        # getting the message information from InterfaceApp object
+        
     #-------------------------------------------
     
     def bank_menu(self, step=0, adding=0):
         """
         change bank type
+        from MainApp object
         """
 
-        channel_obj = None
-        if self.channel_lst:
-            channel_obj = self.channel_lst[self.channel_num]
-        else:
-            msg = "No channel list"
-            self.display(msg)
-            return
-
-
-        chan_num = channel_obj.chan
-        bank_num = channel_obj.bank
-        bank_num = self.change_menu(bank_num, self.bank_lst, step, adding)
-        channel_obj.bank = bank_num
-        self.bank_num = bank_num
-        msg = "{}".format(self.bank_lst[self.bank_num])
+        msg = self.iap.change_bank(step, adding)
         self.display(msg)
 
     #-------------------------------------------
@@ -351,35 +280,10 @@ class MainApp(object):
     def preset_menu(self, step=0, adding=0):
         """
         change bank preset
+        from MainApp object
         """
      
-        channel_obj = None
-        if self.channel_lst:
-            channel_obj = self.channel_lst[self.channel_num]
-        else:
-            msg = "No channel list"
-            self.display(msg)
-            return
-
-
-        chan_num = channel_obj.chan
-        bank_num = channel_obj.bank
-        msb_num = channel_obj.msb_preset
-        lsb_num = channel_obj.lsb_preset
-        if bank_num == 0: # msb type
-            preset_num = msb_num
-            preset_num = self.change_menu(preset_num, self.preset_lst, step, adding)
-            channel_obj.msb_preset = preset_num
-            self.msb_preset_num = preset_num
-        elif bank_num == 1: # lsb type
-            preset_num = lsb_num
-            preset_num = self.change_menu(preset_num, self.preset_lst, step, adding)
-            channel_obj.lsb_preset = preset_num
-            self.lsb_preset_num = preset_num
-
-        self.preset_modified =1
-        self.bank_select_num = (self.msb_preset_num + (self.lsb_preset_num * 128))
-        msg = "{}".format(self.preset_lst[preset_num])
+        msg = self.iap.change_preset(step, adding)
         self.display(msg)
 
     #-------------------------------------------
@@ -389,9 +293,9 @@ class MainApp(object):
         select patch menu by index
         """
         
-        track = self.iap.curseq.get_track()
-        msg = track.select_patch(step, adding)
+        msg = self.iap.change_patch(step, adding)
         self.display(msg)
+
 
     #-------------------------------------------
 
@@ -803,8 +707,8 @@ class MainApp(object):
                 self.iap.change_window(1)
 
             
-            msg = self.iap.get_message()
-            self.display(msg)
+            # msg = self.iap.get_message()
+            # self.display(msg)
 
     #-------------------------------------------
     
@@ -814,10 +718,10 @@ class MainApp(object):
         from MainApp object
         """
         
-        self.iap = intapp.InterfaceApp()
+        self.iap = intapp.InterfaceApp(self)
+        self.notifying =1
         self.iap.init_app(audio_device)
        
-        self.set_channels()
         self.player = self.iap.player
 
         if midi_filename:

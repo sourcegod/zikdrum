@@ -5,6 +5,7 @@
     Date: Mon, 04/07/2022
     Author: Coolbrother
 """
+import os
 import midiplayer as midp
 import midimanager as midman
 import miditools as midto
@@ -12,7 +13,8 @@ import utils as uti
 
 class InterfaceApp(object):
     """ manage interface application"""
-    def __init__(self):
+    def __init__(self, parent):
+        self.parent = parent
         self.midi_man = None
         self.midplay = None
         self.player = None
@@ -33,8 +35,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
-        self.midi_man = midman.MidiManager()
-        self.midi_man.parent = self
+        self.midi_man = midman.MidiManager(self)
         self.midi_man.init_midi(self.filename, audio_device)
         self.midplay = midp
         self.player = midp.MidiPlayer()
@@ -58,6 +59,16 @@ class InterfaceApp(object):
         """
 
         self.midi_man.close_midi()
+
+    #------------------------------------------------------------------------------
+
+    def notify(self, msg):
+        """
+        notify the parent application
+        from InterfaceApp object
+        """
+        if self.parent:
+            self.parent.notify(msg)
 
     #------------------------------------------------------------------------------
 
@@ -98,12 +109,13 @@ class InterfaceApp(object):
 
         if not self.player.is_playing():
             self.player.play()
-            self.msg_app = f"Play with {self.filename}"
+            self.msg_app = f"Play"
         else:
             self.player.pause()
             (nb_bars, nb_beats, nb_ticks) = self.curseq.get_bar()
             self.msg_app = "Pause at bar: {}:{}:{}".format(nb_bars, nb_beats, nb_ticks)
-
+        
+        self.notify(self.msg_app)
     #------------------------------------------------------------------------------
 
     def stop(self):
@@ -114,6 +126,7 @@ class InterfaceApp(object):
         self.player.stop()
         (nb_bars, nb_beats, nb_ticks) = self.curseq.get_bar()
         self.msg_app = "Stop at bar: {}:{}:{}".format(nb_bars, nb_beats, nb_ticks)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -136,6 +149,7 @@ class InterfaceApp(object):
         else:
             self.player.stop_record()
             self.msg_app = "Stop Record"
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -148,7 +162,7 @@ class InterfaceApp(object):
         pos = self.player.goto_start()
         bar = self.format2bar(-1)
         self.msg_app = "Goto Start at bar: {}".format(bar)
-
+        self.notify(self.msg_app)
     #------------------------------------------------------------------------------
 
     def goto_end(self):
@@ -160,8 +174,10 @@ class InterfaceApp(object):
         self.player.goto_end()
         bar = self.format2bar(-1)
         self.msg_app = "Goto End at bar: {}".format(bar)
+        self.notify(self.msg_app)
 
     #------------------------------------------------------------------------------
+
     def goto_bar(self, num=1):
         """
         goto bar number
@@ -176,6 +192,7 @@ class InterfaceApp(object):
         self.player.goto_bar(num)
         bar = self.format2bar(-1)
         self.msg_app = "Goto Bar at: {}".format(bar)
+        self.notify(self.msg_app)
 
     #------------------------------------------------------------------------------
         
@@ -188,6 +205,7 @@ class InterfaceApp(object):
         self.player.rewind(step)
         bar = self.format2bar(-1)
         self.msg_app = "Bar: {}".format(bar)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -200,6 +218,7 @@ class InterfaceApp(object):
         self.player.forward(step)
         bar = self.format2bar(-1)
         self.msg_app = "Bar: {}".format(bar)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -213,6 +232,7 @@ class InterfaceApp(object):
         self.curseq.set_left_locator(pos)
         bar = self.format2bar(-1)
         self.msg_app = "Set Left Locator at bar: {}".format(bar)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -226,6 +246,7 @@ class InterfaceApp(object):
         self.curseq.set_right_locator(pos)
         bar = self.format2bar(-1)
         self.msg_app = "Set Right Locator at bar: {}".format(bar)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -236,6 +257,7 @@ class InterfaceApp(object):
         pos = self.player.goto_left_locator()
         bar = self.format2bar(-1)
         self.msg_app = "Goto Left Locator at bar: {}".format(bar)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -246,6 +268,7 @@ class InterfaceApp(object):
         pos = self.player.goto_right_locator()
         bar = self.format2bar(-1)
         self.msg_app = "Goto Right Locator at bar: {}".format(bar)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -257,6 +280,7 @@ class InterfaceApp(object):
         self.curseq.set_start_loop(pos)
         bar = self.format2bar(-1)
         self.msg_app = "Set start loop at bar: {}".format(bar)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -268,6 +292,7 @@ class InterfaceApp(object):
         self.curseq.set_end_loop(pos)
         bar = self.format2bar(-1)
         self.msg_app = "Set end loop at bar: {}".format(bar)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -280,6 +305,7 @@ class InterfaceApp(object):
             self.msg_app = "Loop On"
         else:
             self.msg_app = "Loop Off"
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -295,6 +321,7 @@ class InterfaceApp(object):
             self.msg_app = "Click On"
         else:
             self.msg_app = "Click Off"
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -309,6 +336,7 @@ class InterfaceApp(object):
             self.msg_app = "Track {}: Muted".format(tracknum)
         else:
             self.msg_app = "Track {}: unmuted".format(tracknum)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -324,6 +352,7 @@ class InterfaceApp(object):
             self.msg_app = "Track {}: soloed".format(tracknum)
         else:
             self.msg_app = "Track {}: unsoloed".format(tracknum)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -338,6 +367,7 @@ class InterfaceApp(object):
             self.msg_app =  "Autoquantize: On"
         else:
             self.msg_app =  "Autoquantize: Off"
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -349,6 +379,7 @@ class InterfaceApp(object):
 
         self.curseq.quantize_track()
         self.msg_app =  "Quantize to: {}".format(self.player.quan_res)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -369,6 +400,7 @@ class InterfaceApp(object):
             self.msg_app = "Erase track {}: ".format(tracknum)
         else:
             self.msg_app = "Track {}: not erased".format(tracknum)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -385,6 +417,7 @@ class InterfaceApp(object):
             self.msg_app = "Delete track {}".format(tracknum)
         else:
             self.msg_app = "Track {}: not deleted".format(tracknum)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -399,6 +432,7 @@ class InterfaceApp(object):
             self.msg_app = "Track {}: Armed".format(tracknum)
         else:
             self.msg_app = "Track {}: Desarmed".format(tracknum)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -419,6 +453,7 @@ class InterfaceApp(object):
         bpm = self.curseq.get_bpm()
         self.msg_app = "Bar Position: {} / {}, start_loop: {}, end_loop: {},\
                 Bpm: {:.2f}".format(curbar, lastbar, start_loop, end_loop, bpm)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -429,6 +464,7 @@ class InterfaceApp(object):
         """
 
         self.msg_app = self.curseq.get_properties()
+        self.notify(self.msg_app)
     
     #-------------------------------------------
 
@@ -466,6 +502,7 @@ class InterfaceApp(object):
             self.msg_app = "Undo {}".format(curtitle)
         else:
             self.msg_app = "No Undo available"
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -486,6 +523,7 @@ class InterfaceApp(object):
             self.msg_app = "Redo {}".format(title)
         else:
             self.msg_app = "No Redo available"
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -497,6 +535,7 @@ class InterfaceApp(object):
 
         self.player.delete_event(evobj=None)
         self.msg_app = "Delete events"
+        self.notify(self.msg_app)
 
     
     #-------------------------------------------
@@ -509,6 +548,7 @@ class InterfaceApp(object):
 
         self.player.midi_man.panic()
         self.msg_app = "Panic"
+        self.notify(self.msg_app)
     
     #-------------------------------------------
 
@@ -528,6 +568,7 @@ class InterfaceApp(object):
                 self.msg_app  = "Error: No midi data"
         else: # no file
             self.msg_app = "File not found"
+        self.notify(self.msg_app)
      
      #-------------------------------------------
 
@@ -546,6 +587,7 @@ class InterfaceApp(object):
                 self.msg_app = "File not saved"
         else: # not a file
             self.msg_app = "{} is not a file".format(filename)
+        self.notify(self.msg_app)
     
     #-------------------------------------------
  
@@ -561,6 +603,7 @@ class InterfaceApp(object):
             self.msg_app = "Change tempo: {}".format(bpm)
         else:
             self.msg_app = "No tempo changed"
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -571,6 +614,7 @@ class InterfaceApp(object):
         """
         
         self.msg_app = "Quantize: {}".format(reso)
+        self.notify(self.msg_app)
         self.player.quantize_track(type, tracknum, reso)
 
     #-------------------------------------------
@@ -587,7 +631,7 @@ class InterfaceApp(object):
         elif self.window_num == 1:
             self.curseq.init_event_task()
             self.msg_app = "Event list Window"
-
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -608,6 +652,7 @@ class InterfaceApp(object):
                 pass
         else:
             self.msg_app = "No event"
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -633,6 +678,7 @@ class InterfaceApp(object):
             self.curseq.group_ev.play_note_group(ev_lst, timing)
         else:
             self.msg_app = "No event group"
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -646,7 +692,6 @@ class InterfaceApp(object):
 
 #-------------------------------------------
 
-
     def filter_notes(tracknum, start_note, end_note):
         """
         filter notes range in event list
@@ -654,6 +699,7 @@ class InterfaceApp(object):
         """
         
         self.msg_app = "Filter Notes"
+        self.notify(self.msg_app)
         self.curseq.filter_notes(tracknum, start_note, end_note)
 
     #-------------------------------------------
@@ -667,6 +713,7 @@ class InterfaceApp(object):
         """
 
         self.msg_app = "Move Notes"
+        self.notify(self.msg_app)
         tracknum =-1; start_note = "C5"; end_note = "C8"
         self.curseq.move_notes(tracknum, start_note, end_note)
     
@@ -675,6 +722,8 @@ class InterfaceApp(object):
        
     def change_tracknum(self, step=0, adding=0):
         """
+        changing track number from the sequencer
+        from InterfaceApp object
         """
 
         tracknum = self.curseq.change_tracknum(step, adding)
@@ -685,9 +734,61 @@ class InterfaceApp(object):
             self.msg_app = "{}: {} - {}".format(tracknum, track_name, instrument_name)
         else:
             self.msg_app = "{}: Track {}".format(tracknum, tracknum)
+        
+        return self.msg_app
 
     #-------------------------------------------
 
+    def change_channel(self, step=0, adding=0):
+        """
+        changing channel object list
+        """
+
+        track = self.curseq.get_track()
+        chan_num = track.select_channel(step, adding)
+        # print(f"voici chan_num: {chan_num}")
+        self.msg_app  = "Channel : {}".format(chan_num+1)
+       
+        return self.msg_app
+    #-------------------------------------------
+
+    def change_bank(self, step=0, adding=0):
+        """
+        changing bank object list
+        from InterfaceApp
+        """
+
+        track = self.curseq.get_track()
+        # returns formated message
+        return track.select_bank(step, adding)
+
+    #-------------------------------------------
+
+    def change_preset(self, step=0, adding=0):
+        """
+        changing preset object list
+        from InterfaceApp
+        """
+
+        track = self.curseq.get_track()
+        # returns formated message
+        return track.select_preset(step, adding)
+
+    #-------------------------------------------
+
+
+    def change_patch(self, step=0, adding=0):
+        """
+        changing patch object list
+        from InterfaceApp
+        """
+
+        track = self.curseq.get_track()
+        # returns formated message
+        return track.select_patch(step, adding)
+
+
+    #-------------------------------------------
     def add_track_selection(self, tracknum):
         """
         adding track index to the tracks selection
@@ -701,6 +802,7 @@ class InterfaceApp(object):
         else:
             msg = "No track selection added"
         self.msg_app = msg
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -716,6 +818,7 @@ class InterfaceApp(object):
         else:
             msg = "No track selection deleted"
         self.msg_app = msg
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -732,6 +835,7 @@ class InterfaceApp(object):
         else:
             msg = "No track selected"
         self.msg_app = msg
+        self.notify(self.msg_app)
  
     #-------------------------------------------
 
@@ -747,6 +851,7 @@ class InterfaceApp(object):
         else:
             msg = "No track unselected"
         self.msg_app = msg
+        self.notify(self.msg_app)
             
     #-------------------------------------------
 
@@ -762,6 +867,7 @@ class InterfaceApp(object):
         else:
             msg = "No track selected"
         self.msg_app = msg
+        self.notify(self.msg_app)
     
     #-------------------------------------------
 
@@ -776,6 +882,7 @@ class InterfaceApp(object):
         else:
             msg = "No track unselected"
         self.msg_app = msg
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -817,6 +924,7 @@ class InterfaceApp(object):
             r_loc = self.format2bar(r_loc)
             msg = "Copying tracks from {}, to {}".format(l_loc, r_loc)
         self.msg_app = msg
+        self.notify(self.msg_app)
 
     #-------------------------------------------
          
@@ -839,6 +947,7 @@ class InterfaceApp(object):
             r_loc = self.format2bar(r_loc)
             msg = "Cutting tracks from {}, to {}".format(l_loc, r_loc)
         self.msg_app = msg
+        self.notify(self.msg_app)
 
     #-------------------------------------------
      
@@ -860,6 +969,7 @@ class InterfaceApp(object):
             r_loc = self.format2bar(r_loc)
             msg = "Erasing track from {}, to {}".format(l_loc, r_loc)
         self.msg_app = msg
+        self.notify(self.msg_app)
 
     #-------------------------------------------
     
@@ -876,6 +986,7 @@ class InterfaceApp(object):
         pos = self.format2bar(pos)
         msg = "Paste replace tracks at  {}".format(pos)
         self.msg_app = msg
+        self.notify(self.msg_app)
 
     #-------------------------------------------
      
@@ -892,6 +1003,7 @@ class InterfaceApp(object):
         pos = self.format2bar(pos)
         msg = "Paste merge tracks at  {}".format(pos)
         self.msg_app = msg
+        self.notify(self.msg_app)
 
     #-------------------------------------------
     
@@ -904,25 +1016,8 @@ class InterfaceApp(object):
         self.player.log_info(type)
         msg = "Logging info"
         self.msg_app = msg
+        self.notify(self.msg_app)
     
-    #-------------------------------------------
-
-    def empty(self):
-        """
-        """
-
-    #-------------------------------------------
-
-    def empty(self):
-        """
-        """
-
-    #-------------------------------------------
-
-    def empty(self):
-        """
-        """
-
     #-------------------------------------------
 
     def test(self):
@@ -932,12 +1027,13 @@ class InterfaceApp(object):
         """
         
         self.msg_app = "Test"
-        
+        self.notify(self.msg_app)
         ev_lst = self.curseq.get_note_group(-1, 1)
         if ev_lst:
             self.curseq.play_note_group(ev_lst)
         else:
             self.msg_app = "No event group"
+        self.notify(self.msg_app)
 
 
         """
