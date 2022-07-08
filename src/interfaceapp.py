@@ -29,7 +29,7 @@ class InterfaceApp(object):
 
     #-----------------------------------------
 
-    def init_app(self, audio_device=""):
+    def init_app(self, midi_filename="", audio_device=""):
         """
         init application
         from InterfaceApp object
@@ -49,6 +49,12 @@ class InterfaceApp(object):
         msg = "Init player"
         self.make_undo(msg)
         self.msg_app = "Groovit Synth..."
+        self.notify(self.msg_app)
+        if midi_filename:
+            self.player.open_midi_file(midi_filename)
+            self.player.play()
+        else:
+            self.midi_man.synth.play_notes() # demo test for the synth
 
     #------------------------------------------------------------------------------
         

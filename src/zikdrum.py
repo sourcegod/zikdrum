@@ -92,6 +92,15 @@ class MainApp(object):
         self.player = None
         self.iap = None
         self.notifying =0
+        self.bank_lst = ["0 (MSB)", "32 (LSB)"]
+        self.bank_num =0
+        self.preset_lst = range(128)
+        self.msb_preset_num =0
+        self.lsb_preset_num =0
+        self.bank_select_num =0 # result of: (msb_preset_num + msb_preset_num*128)
+        self.bank_select_lst = [0, 128] # bank select allowed
+        self.preset_modified =0
+        self.new_patch_lst = range(128) # empty patch
         self.filename = "/home/com/banks/sf2/FluidR3_GM.sf2"
         # self.filename = "/home/banks/sf2/Yamaha_XG_Sound_Set.sf2"
         # not work with fluidsynth 1.1.6
@@ -720,13 +729,7 @@ class MainApp(object):
         
         self.iap = intapp.InterfaceApp(self)
         self.notifying =1
-        self.iap.init_app(audio_device)
-       
-        self.player = self.iap.player
-
-        if midi_filename:
-            self.player.open_midi_file(midi_filename)
-            self.player.play()
+        self.iap.init_app(midi_filename, audio_device)
         self.key_handler()
 
     #-------------------------------------------

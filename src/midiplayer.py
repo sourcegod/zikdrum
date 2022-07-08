@@ -3298,14 +3298,14 @@ class SystemScheduler(object):
                     if not track.muted and not track.sysmuted:
                         # Todo: changing channel and patch message dynamically or statically
                         
-                        """
+                        # """
                         # dont modify drum track
                         if tracknum != 0:
                             # only for recording   ???
                             # changing channel dynamically: during playback
                             msg_ev.msg.channel = track.channel_num
                             pass
-                        """
+                        # """
                         
                         self.midi_man.output_message(msg_ev.msg)
                     # delete msg in the buffer after sending

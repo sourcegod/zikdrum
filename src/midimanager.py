@@ -64,6 +64,16 @@ class MidiFluid(object):
         from MidiFluid object
         """
 
+        """
+        # self.fs.bank_select(0, 0)
+        self.fs.noteon(9, 60, 100)
+        time.sleep(0.5)
+        self.fs.noteon(9, 62, 100)
+        time.sleep(0.5)
+        self.fs.noteon(9, 64, 100)
+        time.sleep(0.5)
+        """
+
         self.fs.program_change(0, 16)
         self.fs.noteon(0, 60, 100)
         time.sleep(1.0)
@@ -95,7 +105,7 @@ class MidiManager(object):
 
     #-----------------------------------------
 
-    def init_midi(self, filename, audio_device=""):
+    def init_midi(self, bank_filename, audio_device=""):
         """
         init synth 
         from MidiManager object
@@ -104,15 +114,10 @@ class MidiManager(object):
         if self.synth_type == 0:
             self.open_output(1)
         else:
-            self.synth.init_synth(filename, audio_device)
+            self.synth.init_synth(bank_filename, audio_device)
             # set channel 9 for drum percussion
-            # chan, preset
-            if not filename:
-                self.program_change(9, 0)
-                self.synth.play_notes()
 
     #-----------------------------------------
-
 
     def close_midi(self):
         self.synth.close_synth()
@@ -263,7 +268,7 @@ class MidiManager(object):
             elif type == "note_off":
                 fs.noteoff(chan, msg.note)
             elif type == "program_change":
-                fs.program_change(chan, 0) # msg.program)
+                fs.program_change(chan, msg.program)
             elif type == "control_change":
                 fs.cc(self.chan, msg.control, msg.value)
             elif type == "pitchwheel":
