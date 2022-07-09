@@ -3,13 +3,7 @@
     File: zikdrum.py
     See changelog
 
-    Version 0.9
-    Last update: Wed, 06/07/2022
-
-    Update: samedi, 19/08/17
-    See changelog
-
-    Date: jeudi, 25/08/16    
+    First Date: jeudi, 25/08/16    
     Author:
     Coolbrother
 
