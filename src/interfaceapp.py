@@ -52,8 +52,7 @@ class InterfaceApp(object):
         self.midi_man = midman.MidiManager(self)
         self.midi_man.init_midi(self.filename, audio_device)
         self.midplay = midp
-        self.player = midp.MidiPlayer()
-        self.player.parent = self
+        self.player = midp.MidiPlayer(self)
         self.player.init_player(self.midi_man)
         self.curseq = self.player.curseq
         # self.midi_man.receive_from(port=1, callback=self.midi_man.input_callback)
@@ -68,7 +67,7 @@ class InterfaceApp(object):
             self.player.open_midi_file(midi_filename)
             self.player.play()
         else:
-            self.midi_man.synth.play_notes() # demo test for the synth
+            self.test_synth_engine()
 
     #------------------------------------------------------------------------------
         
@@ -101,6 +100,24 @@ class InterfaceApp(object):
         return self.msg_app
 
     #------------------------------------------------------------------------------
+
+    def test_synth_engine(self):
+        """
+        play notes to the synth engine
+        from InterfaceApp object
+        """
+        self.msg_app = ""
+
+        if self.midi_man and self.midi_man.synth:
+            self.midi_man.synth.play_notes() # demo test for the synth
+            self.msg_app = "Test Synth Engine"
+        else:
+            self.msg_app = "No Synth Engine"
+        
+        self.notify(self.msg_app)
+
+    #------------------------------------------------------------------------------
+
 
     def format2bar(self, nb_tick=-1):
         """
@@ -1077,6 +1094,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
+        if not self.player_is_ready(): return
         self.player.log_info(type)
         msg = "Logging info"
         self.msg_app = msg

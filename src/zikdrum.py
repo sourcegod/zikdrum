@@ -16,6 +16,7 @@
 """
 
 import sys
+import time
 import curses
 import dialog as dlg
 import interfaceapp as intapp
@@ -429,6 +430,7 @@ class MainApp(object):
         from MainApp object
         """
         msg = self.msg_home
+        time.sleep(0.5)
         self.display(msg)
 
     #-------------------------------------------
@@ -436,7 +438,7 @@ class MainApp(object):
     def key_handler(self):
         msg = self.msg_home
         self.display(msg)
-        curses.beep() # to test the nodelay function
+        # curses.beep() # to test the nodelay function
         while 1:
             key = self.win.getch()
             if key == 27: # escape
@@ -701,17 +703,23 @@ class MainApp(object):
                     self.iap.curseq.play_note_group(timing=1)
 
 
-            elif key == curses.KEY_F9:
-                # log info 
-                self.iap.log_info(type=0)
-                self.iap.log_info(type=1)
-
             elif key == curses.KEY_F7:
                 self.iap.change_window(0)
             elif key == curses.KEY_F8:
                 self.iap.change_window(1)
+            elif key == curses.KEY_F9:
+                self.iap.test_synth_engine()
+                """
+                # log info 
+                self.iap.log_info(type=0)
+                self.iap.log_info(type=1)
+                """
 
-            
+            elif key == curses.KEY_F11: # not working
+                self.iap.test_synth_engine()
+
+
+            # self.update()
             # msg = self.iap.get_message()
             # self.display(msg)
 

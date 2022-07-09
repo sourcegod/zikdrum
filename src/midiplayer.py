@@ -181,7 +181,8 @@ class MidiChannel(object):
         if item_num != step:
             item_num = step
         else: # no change for item num
-            beep()
+            # beep()
+            pass
         
         return item_num
 
@@ -3405,8 +3406,8 @@ class MidiPlayer(object):
     """
     Player manager
     """
-    def __init__(self):
-        self.parent = None
+    def __init__(self, parent=None):
+        self.parent = parent
         self.curseq = None
         self.midi_man = None
         self.playpos =0 # in tick
