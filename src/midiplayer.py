@@ -3434,6 +3434,8 @@ class MidiPlayer(object):
         self.click_playing =0
         self.midi_sched = None # for midi scheduler
         self.trackedit = midto.MidiTrackEdit()
+        self.is_ready = False
+
 
     #-----------------------------------------
 
@@ -3454,7 +3456,10 @@ class MidiPlayer(object):
         update player
         from MidiPlayer object
         """
+        
         self.curseq.update_sequencer()
+        self.is_ready = True
+        
         """
         for track in self.track_lst:
             track.midi_man = self.midi_man
@@ -3484,6 +3489,16 @@ class MidiPlayer(object):
         # pass the midi driver to all tracks
         # click on recording
         self.click_recording =1
+        self.is_ready = False
+
+    #-----------------------------------------
+
+    def close_player(self):
+        """
+        set the player not ready
+        from MidiPlayer object
+        """
+        self.is_ready = False
 
     #-----------------------------------------
 
@@ -4152,7 +4167,9 @@ class MidiPlayer(object):
         res = self.curseq.load_file(filename)
         if res:
             self.click_track = self.curseq.get_click_track()
+            # player is ready too
             self.update_player()
+            
        
        
         return res

@@ -29,6 +29,20 @@ class InterfaceApp(object):
 
     #-----------------------------------------
 
+    def player_is_ready(self):
+        """
+        Test the player
+        from InterfaceApp object
+        """
+        
+        if self.player and self.player.is_ready:
+            return True
+        msg = "Error: Player is not Ready"
+        self.notify(msg)
+        return False
+
+    #-----------------------------------------
+
     def init_app(self, midi_filename="", audio_device=""):
         """
         init application
@@ -112,6 +126,8 @@ class InterfaceApp(object):
         """ 
         play from Interface App 
         """
+        
+        if not self.player_is_ready(): return
 
         if not self.player.is_playing():
             self.player.play()
@@ -129,6 +145,7 @@ class InterfaceApp(object):
         stop from Interface App object
         """
 
+        if not self.player_is_ready(): return
         self.player.stop()
         (nb_bars, nb_beats, nb_ticks) = self.curseq.get_bar()
         self.msg_app = "Stop at bar: {}:{}:{}".format(nb_bars, nb_beats, nb_ticks)
@@ -142,13 +159,7 @@ class InterfaceApp(object):
         from Interface App object
         """
 
-        """
-
-        if not self.player.get_tracks_armed():
-            self.msg_app = "No track armed"
-        else:
-        """
-
+        if not self.player_is_ready(): return
         if not self.player.is_recording():
             self.player.start_record()
             self.msg_app = "Record"
@@ -165,6 +176,7 @@ class InterfaceApp(object):
         from Interface App object
         """
         
+        if not self.player_is_ready(): return
         pos = self.player.goto_start()
         bar = self.format2bar(-1)
         self.msg_app = "Goto Start at bar: {}".format(bar)
@@ -190,6 +202,7 @@ class InterfaceApp(object):
         from Interface App object
         """
         
+        if not self.player_is_ready(): return
         # temporary take only the bar number
         try:
             num = int(num)
@@ -208,6 +221,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
+        if not self.player_is_ready(): return
         self.player.rewind(step)
         bar = self.format2bar(-1)
         self.msg_app = "Bar: {}".format(bar)
@@ -221,6 +235,7 @@ class InterfaceApp(object):
         from Interface App object
         """
 
+        if not self.player_is_ready(): return
         self.player.forward(step)
         bar = self.format2bar(-1)
         self.msg_app = "Bar: {}".format(bar)
@@ -234,6 +249,7 @@ class InterfaceApp(object):
         from Interface App object
         """
 
+        if not self.player_is_ready(): return
         pos = self.player.get_position()
         self.curseq.set_left_locator(pos)
         bar = self.format2bar(-1)
@@ -248,6 +264,7 @@ class InterfaceApp(object):
         from Interface App object
         """
 
+        if not self.player_is_ready(): return
         pos = self.player.get_position()
         self.curseq.set_right_locator(pos)
         bar = self.format2bar(-1)
@@ -260,6 +277,7 @@ class InterfaceApp(object):
         """
         """
 
+        if not self.player_is_ready(): return
         pos = self.player.goto_left_locator()
         bar = self.format2bar(-1)
         self.msg_app = "Goto Left Locator at bar: {}".format(bar)
@@ -271,6 +289,7 @@ class InterfaceApp(object):
         """
         """
 
+        if not self.player_is_ready(): return
         pos = self.player.goto_right_locator()
         bar = self.format2bar(-1)
         self.msg_app = "Goto Right Locator at bar: {}".format(bar)
@@ -282,6 +301,7 @@ class InterfaceApp(object):
         """
         """
 
+        if not self.player_is_ready(): return
         pos = self.player.get_position()
         self.curseq.set_start_loop(pos)
         bar = self.format2bar(-1)
@@ -294,6 +314,7 @@ class InterfaceApp(object):
         """
         """
 
+        if not self.player_is_ready(): return
         pos = self.player.get_position()
         self.curseq.set_end_loop(pos)
         bar = self.format2bar(-1)
@@ -306,6 +327,7 @@ class InterfaceApp(object):
         """
         """
 
+        if not self.player_is_ready(): return
         looping = self.curseq.toggle_loop()
         if looping:
             self.msg_app = "Loop On"
@@ -336,6 +358,8 @@ class InterfaceApp(object):
         toggle mute
         from InterfaceApp object
         """
+
+        if not self.player_is_ready(): return
         muted = self.curseq.toggle_mute()
         tracknum = self.curseq.get_tracknum()
         if muted:
@@ -352,6 +376,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
+        if not self.player_is_ready(): return
         soloed = self.curseq.toggle_solo()
         tracknum = self.curseq.get_tracknum()
         if soloed:
@@ -368,6 +393,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
+        if not self.player_is_ready(): return
         res = self.curseq.toggle_quantize()
         if res:
             self.msg_app =  "Autoquantize: On"
@@ -383,6 +409,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
+        if not self.player_is_ready(): return
         self.curseq.quantize_track()
         self.msg_app =  "Quantize to: {}".format(self.player.quan_res)
         self.notify(self.msg_app)
@@ -395,6 +422,7 @@ class InterfaceApp(object):
         from Interface App object
         """
 
+        if not self.player_is_ready(): return
         title = "Erase track"
         if startpos == 0  and endpos == -1:
             (res, tracknum) = self.curseq.erase_track(tracknum, startpos, endpos)
@@ -416,6 +444,7 @@ class InterfaceApp(object):
         from Interface App object
         """
 
+        if not self.player_is_ready(): return
         title = "Delete track"
         (res, tracknum) = self.curseq.delete_track(tracknum)
         if res:
@@ -433,6 +462,7 @@ class InterfaceApp(object):
         from Interface App object
         """
 
+        if not self.player_is_ready(): return
         (tracknum, armed) = self.curseq.arm(tracknum, armed)
         if armed:
             self.msg_app = "Track {}: Armed".format(tracknum)
@@ -448,6 +478,7 @@ class InterfaceApp(object):
         from Interface App object
         """
         
+        if not self.player_is_ready(): return
         # getting current position
         curbar = self.format2bar(-1)
         lastpos = self.player.get_length()
@@ -469,6 +500,7 @@ class InterfaceApp(object):
         from Interface App object
         """
 
+        if not self.player_is_ready(): return
         self.msg_app = self.curseq.get_properties()
         self.notify(self.msg_app)
     
@@ -495,6 +527,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
         
+        if not self.player_is_ready(): return
         curtitle = self.undoman.title
         (title, player) = self.undoman.prev_undo()
         if player:
@@ -518,6 +551,7 @@ class InterfaceApp(object):
         from Interface App object
         """
 
+        if not self.player_is_ready(): return
         (title, player) = self.undoman.next_undo()
         if player:
             # copy player to not modify the saved
@@ -539,6 +573,7 @@ class InterfaceApp(object):
         from Interface App object
         """
 
+        if not self.player_is_ready(): return
         self.player.delete_event(evobj=None)
         self.msg_app = "Delete events"
         self.notify(self.msg_app)
@@ -619,6 +654,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
         
+        if not self.player_is_ready(): return
         self.msg_app = "Quantize: {}".format(reso)
         self.notify(self.msg_app)
         self.player.quantize_track(type, tracknum, reso)
@@ -631,6 +667,7 @@ class InterfaceApp(object):
         from Interface object
         """
         
+        if not self.player_is_ready(): return
         self.window_num = num
         if self.window_num == 0:
             self.msg_app = "Track Window"
@@ -647,6 +684,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
         
+        if not self.player_is_ready(): return
         # calling get_playable_ev
         self.msg_app = ""
         evobj = self.curseq.select_one_ev(step, adding)
@@ -668,6 +706,7 @@ class InterfaceApp(object):
         from Interface App object
         """
 
+        if not self.player_is_ready(): return
         self.curseq.group_ev.play_ev(evobj=None)
     #-------------------------------------------
 
@@ -679,6 +718,7 @@ class InterfaceApp(object):
         """
         
         self.msg_app = ""
+        if not self.player_is_ready(): return
         ev_lst = self.curseq.select_note_group(step, adding)
         if ev_lst:
             self.curseq.group_ev.play_note_group(ev_lst, timing)
@@ -694,6 +734,7 @@ class InterfaceApp(object):
         from Interface App object
         """
 
+        if not self.player_is_ready(): return
         self.curseq.group_ev.play_note_group(timing=timing)
 
 #-------------------------------------------
@@ -704,6 +745,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
         
+        if not self.player_is_ready(): return
         self.msg_app = "Filter Notes"
         self.notify(self.msg_app)
         self.curseq.filter_notes(tracknum, start_note, end_note)
@@ -718,6 +760,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
+        if not self.player_is_ready(): return
         self.msg_app = "Move Notes"
         self.notify(self.msg_app)
         tracknum =-1; start_note = "C5"; end_note = "C8"
@@ -741,8 +784,8 @@ class InterfaceApp(object):
         else:
             self.msg_app = "{}: Track {}".format(tracknum, tracknum)
         
-        return self.msg_app
-
+        self.notify(self.msg_app)
+        
     #-------------------------------------------
 
     def change_channel(self, step=0, adding=0):
@@ -754,6 +797,7 @@ class InterfaceApp(object):
         chan_num = track.select_channel(step, adding)
         # print(f"voici chan_num: {chan_num}")
         self.msg_app  = "Channel : {}".format(chan_num+1)
+        self.notify(self.msg_app)
        
         return self.msg_app
     #-------------------------------------------
@@ -766,7 +810,8 @@ class InterfaceApp(object):
 
         track = self.curseq.get_track()
         # returns formated message
-        return track.select_bank(step, adding)
+        self.msg_app = track.select_bank(step, adding)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
 
@@ -778,10 +823,10 @@ class InterfaceApp(object):
 
         track = self.curseq.get_track()
         # returns formated message
-        return track.select_preset(step, adding)
+        self.msg_app = track.select_preset(step, adding)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
-
 
     def change_patch(self, step=0, adding=0):
         """
@@ -791,8 +836,8 @@ class InterfaceApp(object):
 
         track = self.curseq.get_track()
         # returns formated message
-        return track.select_patch(step, adding)
-
+        self.msg_app = track.select_patch(step, adding)
+        self.notify(self.msg_app)
 
     #-------------------------------------------
     def add_track_selection(self, tracknum):
@@ -801,6 +846,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
+        if not self.player_is_ready(): return
         (res, tracknum) = self.select.add_track_selection(tracknum)
         if res:
             self.select.select_all_time()
@@ -818,6 +864,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
+        if not self.player_is_ready(): return
         (res, tracknum) = self.select.del_track_selection(tracknum)
         if res:
             msg = "Delete track selection: {}".format(tracknum)
@@ -834,6 +881,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
+        if not self.player_is_ready(): return
         if self.select.select_cur_track():
             self.select.select_all_time()
             tracknum = self.curseq.get_tracknum()
@@ -851,6 +899,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
+        if not self.player_is_ready(): return
         if self.select.unselect_cur_track():
             tracknum = self.cur_seq.get_tracknum()
             msg = "Unselect current track: {}".format(tracknum)
@@ -867,6 +916,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
+        if not self.player_is_ready(): return
         if self.select.select_all_tracks():
             self.select.select_all_time()
             msg = "Select all tracks"
@@ -883,6 +933,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
+        if not self.player_is_ready(): return
         if self.select.unselect_all_tracks():
             msg = "Unselect all tracks"
         else:
@@ -898,6 +949,7 @@ class InterfaceApp(object):
         from InterfaceApp object 
         """
 
+        if not self.player_is_ready(): return
         self.select.select_time(start_pos, end_pos)
         
     #-------------------------------------------
@@ -909,6 +961,7 @@ class InterfaceApp(object):
         from InterfaceApp object 
         """
         
+        if not self.player_is_ready(): return
         self.select.select_all_time()
 
     #-------------------------------------------
@@ -919,6 +972,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
         
+        if not self.player_is_ready(): return
         tracks_sel = self.select.get_tracks_selection()
         # tracknum = self.curseq.get_tracknum()
         if not tracks_sel:
@@ -940,6 +994,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
         
+        if not self.player_is_ready(): return
         tracks_sel = self.select.get_tracks_selection()
         # tracknum = self.curseq.get_tracknum()
         if not tracks_sel:
@@ -963,6 +1018,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
         
+        if not self.player_is_ready(): return
         tracks_sel = self.select.get_tracks_selection()
         if not tracks_sel:
             msg = "No track selected"
@@ -985,6 +1041,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
         
+        if not self.player_is_ready(): return
         pos = self.curseq.get_position()
         self.clip.paste_replace(pos)
         title = "Paste replace tracks"
@@ -1002,6 +1059,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
         
+        if not self.player_is_ready(): return
         pos = self.curseq.get_position()
         self.clip.paste_merge(pos)
         title = "Paste merge tracks"

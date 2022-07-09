@@ -258,8 +258,7 @@ class MainApp(object):
         from MainApp object
         """
         
-        msg = self.iap.change_tracknum(step, adding)    
-        self.display(msg)
+        self.iap.change_tracknum(step, adding)    
 
     #-------------------------------------------
 
@@ -269,8 +268,8 @@ class MainApp(object):
         from MainApp object
         """
         
-        msg = self.iap.change_channel(step, adding)
-        self.display(msg)
+        # the result is displays by the app interface
+        self.iap.change_channel(step, adding)
         # getting the message information from InterfaceApp object
         
     #-------------------------------------------
@@ -281,8 +280,7 @@ class MainApp(object):
         from MainApp object
         """
 
-        msg = self.iap.change_bank(step, adding)
-        self.display(msg)
+        self.iap.change_bank(step, adding)
 
     #-------------------------------------------
 
@@ -292,8 +290,7 @@ class MainApp(object):
         from MainApp object
         """
      
-        msg = self.iap.change_preset(step, adding)
-        self.display(msg)
+        self.iap.change_preset(step, adding)
 
     #-------------------------------------------
 
@@ -302,8 +299,7 @@ class MainApp(object):
         select patch menu by index
         """
         
-        msg = self.iap.change_patch(step, adding)
-        self.display(msg)
+        self.iap.change_patch(step, adding)
 
 
     #-------------------------------------------
