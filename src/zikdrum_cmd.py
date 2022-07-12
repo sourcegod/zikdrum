@@ -36,13 +36,26 @@ def write_historyfile(filename=""):
 
 class CommandApp(object):
     def __init__(self):
-        self.iap = None
+        self.iap = intapp.InterfaceApp(self)
         self.notifying =0
         self.filename = "/home/com/banks/sf2/FluidR3_GM.sf2"
         # self.filename = "/home/banks/sf2/Yamaha_XG_Sound_Set.sf2"
         # not work with fluidsynth 1.1.6
         # self.filename = "/home/banks/sf2/OmegaGMGS.sf2"
         self.msg_home = "Grovit Synth..."
+        self._global_dic = {
+                ("demo", "test"): self.iap.test_synth_engine,
+        }
+
+        self._transport_dic = {
+                ("pp", "play"): self.iap.play_pause,
+                ("st", "stop"): self.iap.stop,
+        }
+
+        self._com_lst = [
+                self._global_dic,
+                self._transport_dic,
+        ]
 
     #-------------------------------------------
     
@@ -67,6 +80,98 @@ class CommandApp(object):
 
     #-------------------------------------------
 
+    def beep(self):
+        """
+        Generate beep
+        from CommandApp object
+        """
+        
+        print("\a")
+
+    #------------------------------------------------------------------------------
+    
+    def search_func(self, funcName):
+        """
+        search function from dict list
+        returns function
+        from CommandApp object
+        """
+        cmdFunc = None
+        for dic in self._com_lst:
+            for keys in dic.keys():
+                # keys are tuple
+                if funcName in keys:
+                    cmdFunc = dic[keys]
+                    # print("cmdFunc found: ", cmdFunc)
+                    return cmdFunc
+
+        return cmdFunc
+
+    #------------------------------------------------------------------------------
+
+    def parse_string(self, valStr, *args):
+
+        # print(f"Parsing: ", valStr)
+        
+        cmdFunc = None
+        funcName = ""
+        # Remove all spaces from string
+        if valStr:
+            argLst = valStr.lower().split()
+        else:
+            argLst = args
+        if argLst:
+            funcName = argLst.pop(0)
+            cmdFunc = self.search_func(funcName)
+            if cmdFunc: 
+                cmdFunc(*argLst)
+            else:
+                msg = f"{funcName}: command not found."
+                self.display(msg)
+
+            
+    #------------------------------------------------------------------------------
+    
+  
+    def main(self, midi_filename="", audio_device=""):
+        """ 
+        main function 
+        from MainApp object
+        """
+
+        filename = _HISTORY_TEMPFILE
+        read_historyfile(filename)
+
+        audio_device = "hw:1"
+        if self.iap:
+            # self.iap = intapp.InterfaceApp(self)
+            self.notifying =1
+            self.iap.init_app(midi_filename, audio_device)
+            print("\a")
+            
+        try:
+            while 1:
+                key = param1 = param2 = ""
+                valStr = input("-> ")
+                if valStr == '': valStr = savStr
+                else: savStr = valStr
+                key = valStr
+                if valStr == " ":
+                    pass
+                elif key == 'Q':
+                    print("Bye Bye!!!")
+                    self.iap.close_app()
+                    self.beep()
+                    break
+                elif key == 'T': # for test
+                    self.test()
+                else:
+                    self.parse_string(valStr)
+        
+        finally:
+            write_historyfile(filename)
+
+    #-------------------------------------------
     
     def test(self):
         """
@@ -79,58 +184,7 @@ class CommandApp(object):
         tracknum =1
       
     #------------------------------------------------------------------------------
-   
-    def beep(self):
-        """
-        Generate beep
-        from CommandApp object
-        """
-
-    #------------------------------------------------------------------------------
-        
-        print("\a")
-    def main(self, midi_filename="", audio_device=""):
-        """ 
-        main function 
-        from MainApp object
-        """
-
-        filename = _HISTORY_TEMPFILE
-        read_historyfile(filename)
-
-        audio_device = "hw:1"
-        self.iap = intapp.InterfaceApp(self)
-        self.notifying =1
-        self.iap.init_app(midi_filename, audio_device)
-        print("\a")
-        
-        try:
-            while 1:
-                key = param1 = param2 = ""
-                valStr = input("-> ")
-                if valStr == '': valStr = savStr
-                else: savStr = valStr
-                if valStr == " ":
-                    key = valStr
-                else:
-                    lst = valStr.split()
-                    lenLst = len(lst)
-                    if lenLst >0: key = lst[0]
-                    if lenLst >1: param1 = lst[1]
-                    if lenLst >2: param2 = lst[2]
-
-                if key == 'Q':
-                    print("Bye Bye!!!")
-                    self.iap.close_app()
-                    self.beep()
-                    break
-                elif key == 'T': # for test
-                    self.test()
-        finally:
-            write_historyfile(filename)
-
-    #-------------------------------------------
-
+ 
 #========================================
 
 if __name__ == "__main__":

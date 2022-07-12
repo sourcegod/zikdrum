@@ -67,7 +67,8 @@ class InterfaceApp(object):
             self.player.open_midi_file(midi_filename)
             self.player.play()
         else:
-            self.test_synth_engine()
+            # self.test_synth_engine()
+            pass
 
     #------------------------------------------------------------------------------
         
