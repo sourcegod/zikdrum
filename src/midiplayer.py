@@ -2080,13 +2080,19 @@ class MidiSequence(object):
 
     #-----------------------------------------
     
-    def set_bar(self, num=1):
+    def set_bar(self, num=0):
         """
         set bar number
         from MidiSequence object
         """
         
-        if num <=0: num =1
+        try:
+            num = int(num)
+        except ValueError:
+            return
+
+        if num <=0: num =0
+        else: num -=1 # temporary, before calculate tick to bar
         # position is in ticks
         pos = self.base.bar * num
         self.set_position(pos)
@@ -3732,7 +3738,7 @@ class MidiPlayer(object):
 
     #-----------------------------------------
     
-    def goto_bar(self, num=1):
+    def goto_bar(self, num=0):
         """
         goto Bar
         from MidiPlayer object

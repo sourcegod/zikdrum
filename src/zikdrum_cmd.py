@@ -43,17 +43,39 @@ class CommandApp(object):
         # not work with fluidsynth 1.1.6
         # self.filename = "/home/banks/sf2/OmegaGMGS.sf2"
         self.msg_home = "Grovit Synth..."
+        
+        # global dictt
         self._global_dic = {
                 ("demo", "test"): self.iap.test_synth_engine,
         }
-
-        self._transport_dic = {
-                ("pp", "play"): self.iap.play_pause,
-                ("st", "stop"): self.iap.stop,
+        
+        # info dictt
+        self._info_dic = {
+                ("info", ): self.iap.print_info,
+                ("sta", "status"): self.iap.print_status,
         }
 
+        # file dict
+        self._file_dic = {
+                ("open", ): self.iap.open_file,
+        }
+
+        # transport dict
+        self._transport_dic = {
+                (" ", "pp", "play"): self.iap.play_pause,
+                ("st", "stop"): self.iap.stop,
+                ("w", "rw", "rewind"): self.iap.rewind,
+                ("b", "fw", "forward"): self.iap.forward,
+                ("<", "gos", "gotostart"): self.iap.goto_start,
+                (">", "goe", "gotoend"): self.iap.goto_end,
+                ("gob", "gotobar"): self.iap.goto_bar,
+        }
+
+        # dict list
         self._com_lst = [
                 self._global_dic,
+                self._info_dic,
+                self._file_dic,
                 self._transport_dic,
         ]
 
@@ -102,7 +124,7 @@ class CommandApp(object):
                 # keys are tuple
                 if funcName in keys:
                     cmdFunc = dic[keys]
-                    # print("cmdFunc found: ", cmdFunc)
+                    # print("cmdFunc found: ", cmdFunc.__name__)
                     return cmdFunc
 
         return cmdFunc
@@ -155,10 +177,10 @@ class CommandApp(object):
                 valStr = input("-> ")
                 if valStr == '': valStr = savStr
                 else: savStr = valStr
+                if valStr == " ": valStr = "pp"
                 key = valStr
-                if valStr == " ":
-                    pass
-                elif key == 'Q':
+
+                if key == 'Q':
                     print("Bye Bye!!!")
                     self.iap.close_app()
                     self.beep()

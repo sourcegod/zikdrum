@@ -207,6 +207,7 @@ class InterfaceApp(object):
         from Interface App object
         """
         
+        if not self.player_is_ready(): return
         self.player.goto_end()
         bar = self.format2bar(-1)
         self.msg_app = "Goto End at bar: {}".format(bar)
@@ -214,7 +215,7 @@ class InterfaceApp(object):
 
     #------------------------------------------------------------------------------
 
-    def goto_bar(self, num=1):
+    def goto_bar(self, num=0):
         """
         goto bar number
         from Interface App object
@@ -626,7 +627,7 @@ class InterfaceApp(object):
             else: # no midi data
                 self.msg_app  = "Error: No midi data"
         else: # no file
-            self.msg_app = "File not found"
+            self.msg_app = "Error: File not found"
         self.notify(self.msg_app)
      
      #-------------------------------------------
