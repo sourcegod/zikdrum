@@ -618,6 +618,8 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
+        if filename: filename = str(filename)
+        else: return
         if os.path.exists(filename):
             if self.player.open_midi_file(filename):
                 self.undoman.init()
@@ -627,7 +629,7 @@ class InterfaceApp(object):
             else: # no midi data
                 self.msg_app  = "Error: No midi data"
         else: # no file
-            self.msg_app = "Error: File not found"
+            self.msg_app = f"Error: File not found: {filename}"
         self.notify(self.msg_app)
      
      #-------------------------------------------

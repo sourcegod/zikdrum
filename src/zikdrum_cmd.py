@@ -118,11 +118,11 @@ class CommandApp(object):
         funcName = ""
         # Remove all spaces from string
         if valStr:
-            argLst = valStr.lower().split()
+            argLst = valStr.split()
         else:
             argLst = args
         if argLst:
-            funcName = argLst.pop(0)
+            funcName = argLst.pop(0).lower()
             cmdFunc = self.search_func(funcName)
             if cmdFunc: 
                 cmdFunc(*argLst)
@@ -150,10 +150,11 @@ class CommandApp(object):
             self.notifying =1
             self.iap.init_app(midi_filename, audio_device)
             print("\a")
+            savStr = ""
             
         try:
             while 1:
-                key = param1 = param2 = ""
+                key = valStr = ""
                 valStr = input("-> ")
                 if valStr == '': valStr = savStr
                 else: savStr = valStr
