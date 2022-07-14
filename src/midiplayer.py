@@ -3528,11 +3528,10 @@ class MidiPlayer(object):
         from MidiPlayer object
         """
 
-        if self.curseq is None:
-            return
+        if self.curseq is None: return
         if self._playing or self._paused:
             self.stop_engine()
-        self.init_params()
+        # self.init_params()
         if self._recording:
             self.stop_record()
         self.finishing =0
@@ -3541,6 +3540,7 @@ class MidiPlayer(object):
         self._recording =0
         self.midi_man.panic()
         self.check_rec_data()
+        self.set_position(0)
         debug()
 
     #-----------------------------------------
