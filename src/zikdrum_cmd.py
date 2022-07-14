@@ -32,7 +32,9 @@ class CommandApp(object):
         # info dictt
         self._info_dic = {
                 ("info", ): self.iap.print_info,
-                ("sta", "status"): self.iap.print_status,
+                ("u", "sta", "status"): self.iap.print_status,
+                ("bar", ): self.iap.get_bar,
+                ("bpm", ): self.iap.change_bpm,
         }
 
         # file dict

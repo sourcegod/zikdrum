@@ -491,6 +491,21 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
+    def get_bar(self):
+        """
+        display the position in bar
+        from Interface App object
+        """
+        
+        if not self.player_is_ready(): return
+        # getting current position
+        bar = self.format2bar(-1)
+        self.msg_app = f"Bar: {bar}"
+        self.notify(self.msg_app)
+
+    #-------------------------------------------
+
+
     def print_status(self):
         """
         display the status bar
@@ -660,12 +675,12 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
-        if bpm:
+        try:
             bpm = float(bpm)
-            self.curseq.set_bpm(bpm)
-            self.msg_app = "Change tempo: {}".format(bpm)
-        else:
-            self.msg_app = "No tempo changed"
+        except ValueError:
+            return
+        self.curseq.set_bpm(bpm)
+        self.msg_app = "Change tempo: {}".format(bpm)
         self.notify(self.msg_app)
 
     #-------------------------------------------
