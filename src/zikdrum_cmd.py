@@ -9,29 +9,8 @@
 """
 
 import os, sys
-import readline
 import interfaceapp as intapp
-
-
-_HISTORY_TEMPFILE = "/tmp/.synth_history"
-
-def read_historyfile(filename=""):
-    if not filename:
-        filename = _HISTORY_FILENAME
-    if os.path.exists(filename):
-        readline.read_history_file(filename)
-        # print('Max history file length:', readline.get_history_length())
-        # print('Startup history:', get_history_items())
-
-#------------------------------------------------------------------------------
-
-def write_historyfile(filename=""):
-    # print('Final history:', get_history_items())
-    if not filename:
-        filename = _HISTORY_FILENAME
-    readline.write_history_file(filename)
-
-#------------------------------------------------------------------------------
+import readln
 
 
 class CommandApp(object):
@@ -161,8 +140,9 @@ class CommandApp(object):
         from MainApp object
         """
 
-        filename = _HISTORY_TEMPFILE
-        read_historyfile(filename)
+        # Register our completer function
+        # readln.set_completer(_words_dic)
+        readln.read_historyfile()
 
         audio_device = "hw:1"
         if self.iap:
@@ -191,7 +171,7 @@ class CommandApp(object):
                     self.parse_string(valStr)
         
         finally:
-            write_historyfile(filename)
+            readln.write_historyfile()
 
     #-------------------------------------------
     
