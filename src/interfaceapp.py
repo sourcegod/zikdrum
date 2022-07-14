@@ -152,7 +152,7 @@ class InterfaceApp(object):
             self.msg_app = f"Play"
         else:
             self.player.pause()
-            (nb_bars, nb_beats, nb_ticks) = self.curseq.get_bar()
+            (nb_bars, nb_beats, nb_ticks) = self.player.get_bar()
             self.msg_app = "Pause at bar: {}:{}:{}".format(nb_bars, nb_beats, nb_ticks)
         
         self.notify(self.msg_app)
@@ -165,7 +165,7 @@ class InterfaceApp(object):
 
         if not self.player_is_ready(): return
         self.player.stop()
-        (nb_bars, nb_beats, nb_ticks) = self.curseq.get_bar()
+        (nb_bars, nb_beats, nb_ticks) = self.player.get_bar()
         self.msg_app = "Stop at bar: {}:{}:{}".format(nb_bars, nb_beats, nb_ticks)
         self.notify(self.msg_app)
 
@@ -606,9 +606,10 @@ class InterfaceApp(object):
         from Interface App object
         """
 
-        self.player.midi_man.panic()
-        self.msg_app = "Panic"
-        self.notify(self.msg_app)
+        if self.player:
+            self.player.midi_man.panic()
+            self.msg_app = "Panic"
+            self.notify(self.msg_app)
     
     #-------------------------------------------
 

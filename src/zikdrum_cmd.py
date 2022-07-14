@@ -26,6 +26,7 @@ class CommandApp(object):
         # global dictt
         self._global_dic = {
                 ("demo", "test"): self.iap.test_synth_engine,
+                (".", "panic"): self.iap.panic,
         }
         
         # info dictt

@@ -1744,7 +1744,7 @@ class MidiSequence(object):
         pos = limit_value(pos, 0, seq_len)
         self.update_tracks_position(pos) 
         self.curpos = pos
-           
+          
     #-----------------------------------------
 
     def get_length(self):
@@ -2080,65 +2080,6 @@ class MidiSequence(object):
 
     #-----------------------------------------
     
-    def set_bar(self, num=0):
-        """
-        set bar number
-        from MidiSequence object
-        """
-        
-        try:
-            num = int(num)
-        except ValueError:
-            return
-
-        if num <=0: num =0
-        else: num -=1 # temporary, before calculate tick to bar
-        # position is in ticks
-        pos = self.base.bar * num
-        self.set_position(pos)
-
-        return pos
-
-    #-----------------------------------------
-
-    def prev_bar(self, step=1):
-        """
-        set prev bar 
-        from MidiSequence object
-        """
-        
-        if step <=0: step =1
-        pos = self.get_position() # in ticks
-        bar = self.base.bar * step
-        (div, rest) = divmod(pos, bar)
-        if rest == 0:
-            pos -= bar
-        else:
-            pos -= rest
-        
-        self.set_position(pos)
-
-    #-----------------------------------------
-
-    def next_bar(self, step=1):
-        """
-        set next bar 
-        from MidiSequence object
-        """
-        
-        pos = self.get_position() # in ticks
-        if step <=0: step =1
-        bar = self.base.bar * step
-        (div, rest) = divmod(pos, bar)
-        if rest == 0:
-            pos += bar
-        else:
-            pos += bar - rest
-        
-        self.set_position(pos)
-
-    #-----------------------------------------
-    
     def get_bar(self, pos=-1):
         """
         convert pos in tick to bar
@@ -2161,6 +2102,8 @@ class MidiSequence(object):
     
     #-----------------------------------------
 
+
+ 
     def get_tracknum(self):
         """
         returns track index
@@ -3550,9 +3493,7 @@ class MidiPlayer(object):
         from MidiPlayer object
         """
            
-        if self.curseq is None:
-            return
-
+        if self.curseq is None: return
         if not self._playing:
             self._playing =1
             self._paused =0
@@ -3566,8 +3507,7 @@ class MidiPlayer(object):
         from MidiPlayer object
         """
         
-        if self.curseq is None:
-            return
+        if self.curseq is None: return
         self._playing =0
         self._paused =1
         if self._recording:
@@ -3643,12 +3583,11 @@ class MidiPlayer(object):
         from MidiPlayer object
         """
 
-        if self.curseq is None:
-            return
-        state =0
-        if self._playing:
+        state = self._playing
+        if self.curseq is None: return
+        if state:
             self.stop_engine()
-            state =1
+            self.midi_man.panic()
         
         self.init_pos()
         self.init_click()
@@ -3688,16 +3627,87 @@ class MidiPlayer(object):
     
     #-----------------------------------------
 
+    def get_bar(self, pos=-1):
+        """
+        convert pos in tick to bar
+        from MidiPlayer
+        """
+ 
+        (nb_bars, nb_beats, nb_ticks) = self.curseq.get_bar(pos)
+
+        return (nb_bars, nb_beats, nb_ticks)
+       
+    #-----------------------------------------
+
+    def set_bar(self, num=0):
+        """
+        set bar number
+        from MidiPlayer object
+        """
+        
+        try:
+            num = int(num)
+        except ValueError:
+            return
+
+        if num <=0: num =0
+        else: num -=1 # temporary, before calculate tick to bar
+        # position is in ticks
+        pos = self.curseq.base.bar * num
+        self.set_position(pos)
+
+        return pos
+
+    #-----------------------------------------
+
+    def prev_bar(self, step=1):
+        """
+        set prev bar 
+        from MidiPlayer object
+        """
+        
+        if step <=0: step =1
+        pos = self.get_position() # in ticks
+        bar = self.curseq.base.bar * step
+        (div, rest) = divmod(pos, bar)
+        if rest == 0:
+            pos -= bar
+        else:
+            pos -= rest
+        
+        # Note: waiting before rewind to not block only on previous bar
+        time.sleep(0.1)
+        self.set_position(pos)
+
+    #-----------------------------------------
+
+    def next_bar(self, step=1):
+        """
+        set next bar 
+        from MidiPlayer object
+        """
+        
+        pos = self.get_position() # in ticks
+        if step <=0: step =1
+        bar = self.curseq.base.bar * step
+        (div, rest) = divmod(pos, bar)
+        if rest == 0:
+            pos += bar
+        else:
+            pos += bar - rest
+        
+        self.set_position(pos)
+
+    #-----------------------------------------
+ 
     def rewind(self, step=1):
         """
         rewind player to previous bar
         from MidiPlayer object
         """
         
-        pos = self.curseq.prev_bar(step)
+        self.prev_bar(step)
         
-        return pos
-
     #-----------------------------------------
 
     def forward(self, step=1):
@@ -3706,9 +3716,8 @@ class MidiPlayer(object):
         from MidiPlayer object
         """
         
-        pos = self.curseq.next_bar(step)
+        self.next_bar(step)
         
-        return pos
 
     #-----------------------------------------
 
@@ -3744,7 +3753,7 @@ class MidiPlayer(object):
         from MidiPlayer object
         """
         
-        pos = self.curseq.set_bar(num)
+        pos = self.set_bar(num)
 
         return pos
 
@@ -3810,7 +3819,7 @@ class MidiPlayer(object):
         """
 
         self.playpos =0
-        self.msg_lst = []
+        # self.msg_lst = []
         # track = self.track_lst[0]
         # track.repeat_count =0
         self.set_position(0)
