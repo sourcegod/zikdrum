@@ -23,7 +23,7 @@ class CommandApp(object):
         # self.filename = "/home/banks/sf2/OmegaGMGS.sf2"
         self.msg_home = "Grovit Synth..."
         self._exclu_func = [
-                "quit", "test_synth_engine", "open_file"
+                "quit", "panic", "test_synth_engine", "open_file"
         ]
         
         # global dictt
