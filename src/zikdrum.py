@@ -102,6 +102,13 @@ class MainApp(object):
         # self.filename = "/home/banks/sf2/OmegaGMGS.sf2"
         self.msg_home = "Grovit Synth..."
         self.window_num =0
+        self._exclu_keys = [
+                15, # Ctrl-O
+                81, # 'Q'
+                curses.KEY_LEFT, curses.KEY_RIGHT,
+                curses.KEY_UP, curses.KEY_DOWN,
+                curses.KEY_F9, curses.KEY_F12,
+            ]
 
     #-------------------------------------------
     
@@ -435,6 +442,11 @@ class MainApp(object):
         # curses.beep() # to test the nodelay function
         while 1:
             key = self.win.getch()
+            if not self.iap.player_is_ready() and\
+                    key not in self._exclu_keys:
+                        msg = "Error Key: player is not ready."
+                        self.display(msg)
+                        continue
             if key == 27: # escape
                 key = self.win.getch()
                 if key >= 32 and key < 128:
@@ -477,6 +489,8 @@ class MainApp(object):
             elif key >= 32 and key < 128:
                 key = chr(key)
             if key == 'Q': 
+                msg = "Bye Bye"
+                self.display(msg)
                 self.beep()
                 self.iap.close_app()
                 self.close_win()
@@ -703,6 +717,7 @@ class MainApp(object):
                 self.iap.change_window(1)
             elif key == curses.KEY_F9:
                 self.iap.test_synth_engine()
+                
                 """
                 # log info 
                 self.iap.log_info(type=0)
@@ -725,6 +740,8 @@ class MainApp(object):
         from MainApp object
         """
         
+        if not audio_device:
+            audio_device = "hw:1"
         self.iap = intapp.InterfaceApp(self)
         self.notifying =1
         self.iap.init_app(midi_filename, audio_device)

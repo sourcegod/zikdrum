@@ -38,7 +38,7 @@ class InterfaceApp(object):
         if self.player and self.player.is_ready:
             return True
         msg = "Error: Player is not Ready"
-        self.notify(msg)
+        # self.notify(msg)
         return False
 
     #-----------------------------------------

@@ -22,6 +22,9 @@ class CommandApp(object):
         # not work with fluidsynth 1.1.6
         # self.filename = "/home/banks/sf2/OmegaGMGS.sf2"
         self.msg_home = "Grovit Synth..."
+        self._exclu_func = [
+                "quit", "test_synth_engine", "open_file"
+        ]
         
         # global dictt
         self._global_dic = {
@@ -94,6 +97,23 @@ class CommandApp(object):
 
     #------------------------------------------------------------------------------
     
+    def check_func_allowed(self, funcName):
+        """
+        check whether function can be called or not.
+        Specially when the player is not ready.
+        from CommandApp object
+        """
+        
+        if not self.iap.player_is_ready() and\
+                funcName not in self._exclu_func:
+                    msg = "Error Command: player is not ready."
+                    self.display(msg)
+                    return False
+
+        return True
+
+    #------------------------------------------------------------------------------
+    
     def search_func(self, funcName):
         """
         search function from dict list
@@ -128,8 +148,11 @@ class CommandApp(object):
             funcName = argLst.pop(0).lower()
             cmdFunc = self.search_func(funcName)
             if cmdFunc: 
-                cmdFunc(*argLst)
-            else:
+                if self.check_func_allowed(cmdFunc.__name__):
+                    cmdFunc(*argLst)
+                else:
+                    return
+            else: # not cmdFunc
                 msg = f"{funcName}: command not found."
                 self.display(msg)
 
@@ -147,7 +170,8 @@ class CommandApp(object):
         # readln.set_completer(_words_dic)
         readln.read_historyfile()
 
-        audio_device = "hw:1"
+        if not audio_device:
+            audio_device = "hw:1"
         if self.iap:
             # self.iap = intapp.InterfaceApp(self)
             self.notifying =1
