@@ -23,7 +23,8 @@ class CommandApp(object):
         # self.filename = "/home/banks/sf2/OmegaGMGS.sf2"
         self.msg_home = "Grovit Synth..."
         self._exclu_func = [
-                "quit", "panic", "test_synth_engine", "open_file"
+                "quit", "panic", "test_synth_engine", 
+                "open_file", "new_player",
         ]
         
         # global dictt
@@ -42,6 +43,7 @@ class CommandApp(object):
 
         # file dict
         self._file_dic = {
+                ("new", ): self.iap.new_player,
                 ("open", ): self.iap.open_file,
         }
 
@@ -206,12 +208,16 @@ class CommandApp(object):
     def test(self):
         """
         test function
-        from MainApp object
+        from CommandApp object
+        """
+        
+        self.iap.test()
         """
         self.display("Test Functions")
         self.iap.test_synth_engine()
         # testing track 1
         tracknum =1
+        """
       
     #------------------------------------------------------------------------------
  

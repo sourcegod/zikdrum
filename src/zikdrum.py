@@ -442,11 +442,14 @@ class MainApp(object):
         # curses.beep() # to test the nodelay function
         while 1:
             key = self.win.getch()
+            
+            """
             if not self.iap.player_is_ready() and\
                     key not in self._exclu_keys:
                         msg = "Error Key: player is not ready."
                         self.display(msg)
                         continue
+            """
             if key == 27: # escape
                 key = self.win.getch()
                 if key >= 32 and key < 128:
@@ -580,13 +583,13 @@ class MainApp(object):
                 self.iap.goto_end()
             elif key == ',': 
                 # select current track
-                self.iap.change_cur_track()
+                self.iap.select_cur_track()
             elif key == '?': # 
                 # unselect current track
                 self.iap.unselect_cur_track()
             elif key == 1: # ctrl +A
                 # select all tracks
-                self.iap.change_all_tracks()
+                self.iap.select_all_tracks()
             elif key == 4: # Ctrl+D
                 # cut track to the clipboard
                 self.iap.cut_to_clip()
@@ -700,15 +703,15 @@ class MainApp(object):
 
             elif key == curses.KEY_F2:
                 if self.iap.window_num == 1:
-                    self.iap.play_ev()
+                    self.iap.play_one_ev()
             elif key == curses.KEY_F3:
                 if self.iap.window_num == 1:
                     # playing notes group with no timing
-                    self.iap.curseq.play_note_group(timing=0)
+                    self.iap.play_note_group(timing=0)
             elif key == curses.KEY_F4:
                 if self.iap.window_num == 1:
                     # playing notes group with timing
-                    self.iap.curseq.play_note_group(timing=1)
+                    self.iap.play_note_group(timing=1)
 
 
             elif key == curses.KEY_F7:
@@ -741,7 +744,7 @@ class MainApp(object):
         """
         
         if not audio_device:
-            audio_device = "hw:1"
+            audio_device = "hw:0"
         self.iap = intapp.InterfaceApp(self)
         self.notifying =1
         self.iap.init_app(midi_filename, audio_device)

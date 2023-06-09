@@ -107,14 +107,17 @@ class InterfaceApp(object):
         play notes to the synth engine
         from InterfaceApp object
         """
+        
         self.msg_app = ""
-
+        
+        # """
         if self.midi_man and self.midi_man.synth:
             self.midi_man.synth.play_notes() # demo test for the synth
             self.msg_app = "Test Synth Engine"
         else:
             self.msg_app = "No Synth Engine"
-        
+        # """
+
         self.notify(self.msg_app)
 
     #------------------------------------------------------------------------------
@@ -138,6 +141,19 @@ class InterfaceApp(object):
         
         return bar
     
+    #-------------------------------------------
+
+    def new_player(self):
+        """
+        create new player
+        from InterfaceApp
+        """
+
+        if not self.player: return
+        self.player.new_player()
+        self.msg_app = "New Player is Created"
+        self.notify(self.msg_app)
+
     #-------------------------------------------
 
     def play_pause(self):
@@ -1077,14 +1093,17 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
         
-        self.msg_app = "Test"
+        self.msg_app = "Test from InterfaceApp"
         self.notify(self.msg_app)
+      
+        """
         ev_lst = self.curseq.get_note_group(-1, 1)
         if ev_lst:
             self.curseq.play_note_group(ev_lst)
         else:
             self.msg_app = "No event group"
         self.notify(self.msg_app)
+        """
 
 
         """

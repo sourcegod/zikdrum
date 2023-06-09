@@ -1694,7 +1694,7 @@ class MidiSequence(object):
 
         self.midi_man = midi_driver
         # generate data
-        # self.gen_default_data()
+        self.gen_default_data()
         # pass the midi driver to all tracks
         for track in self.track_lst:
             track.midi_man = self.midi_man
@@ -2070,7 +2070,7 @@ class MidiSequence(object):
             curpos = self.get_position()
             # debug("curpos: {}".format(curpos))
             if curpos >= self.end_loop: 
-                self.change_position(self.start_loop)
+                self.set_position(self.start_loop)
                 res =1
                 # debug("curpos %d, end_loopl %d" %(self.curpos, self.end_loop))
                 # if self._recording:
@@ -2860,12 +2860,30 @@ class MidiSequence(object):
         return res
 
     #-----------------------------------------
+    
+    def new_sequence(self):
+        """ 
+        create new sequence
+        from MidiSequence object
+        """
+
+        # player is ready too
+        bpm = 120
+        for track in self.track_lst:
+            track.midi_man = self.midi_man
+        self.click_track = self.metronome.init_click(bpm)
+        self.tools.adjust_tracks(self.track_lst)
+        self.midi_man.synth.play_notes() # demo test for the synth
+
+        return
+
+    #-----------------------------------------
 
     def gen_default_data(self):
         """
         temporary function
         generate midi data
-        from MidiPlayer object
+        from MidiSequence object
         """
         
         track = None
@@ -2915,11 +2933,15 @@ class MidiSequence(object):
         self.click_track.channel_num =9 # drums
         track_lst.append(self.click_track)
         track = MidiTrack()
+        track.add_evs(*ev_lst)
+        track.channel_num =9 # drums
         track_lst.append(track)
        
         tempo = self.base.tempo
         bpm = self.base.tempo2bpm(tempo)
         self.set_bpm(bpm)
+
+        return self.click_track
 
     #-----------------------------------------
 
@@ -3408,7 +3430,7 @@ class MidiPlayer(object):
         """
         
         self.curseq.update_sequencer()
-        self.is_ready = True
+        self.is_ready = False
         
         """
         for track in self.track_lst:
@@ -3439,7 +3461,7 @@ class MidiPlayer(object):
         # pass the midi driver to all tracks
         # click on recording
         self.click_recording =1
-        self.is_ready = False
+        self.is_ready = False # True
 
     #-----------------------------------------
 
@@ -4177,20 +4199,38 @@ class MidiPlayer(object):
         from MidiPlayer object
         """
        
-        res =0
-        if self.curseq is None:
-            return
-        res = self.curseq.load_file(filename)
-        if res:
+        ret =0
+        if self.curseq is None: return
+        ret = self.curseq.load_file(filename)
+        if ret:
             self.click_track = self.curseq.get_click_track()
             # player is ready too
             self.update_player()
             
        
        
-        return res
+        return ret
 
     #-----------------------------------------
+
+    def new_player(self):
+        """
+        create new player
+        from MidiPlayer object
+        """
+       
+        ret =0
+        # self.init_player(self.midi_man)
+        if self.curseq is None: return
+        self.curseq.new_sequence()
+        self.update_player()
+
+        self.is_ready = True
+            
+        return ret
+
+    #-----------------------------------------
+
 
 #========================================
 
