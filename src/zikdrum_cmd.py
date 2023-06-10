@@ -12,6 +12,41 @@ import os, sys
 import interfaceapp as intapp
 import readln
 
+_help = """ Help on Zikdrum
+  b: forward
+  k: toggle click
+  h, ?: print this help
+  l: toggle loop
+  p, t, space: toggle play pause
+  q, Q: quit
+  r: toggle record
+  R: toggle record mode (replace, mix)
+  v: stop
+  w: rewind
+  x: toggle mute
+  <: goto start
+  >: goto end
+
+  bpm VAL: set bpm
+  sta, status: display player status and position in secs
+  demo, test: testing
+
+"""
+
+def debug(msg="", title="", bell=True):
+    if _DEBUG:
+        if title: msg = f"{title}: {msg}"
+        print(msg)
+        if bell: print("\a")
+    
+#------------------------------------------------------------------------------
+
+def beep():
+    print("\a")
+
+#-------------------------------------------
+
+
 
 class CommandApp(object):
     def __init__(self):
@@ -138,15 +173,15 @@ class CommandApp(object):
 
     #------------------------------------------------------------------------------
 
-    def parse_string(self, valStr, *args):
+    def parse_string(self, val_str, *args):
 
-        # print(f"Parsing: ", valStr)
+        # print(f"Parsing: ", val_str)
         
         cmdFunc = None
         funcName = ""
         # Remove all spaces from string
-        if valStr:
-            argLst = valStr.split()
+        if val_str:
+            argLst = val_str.split()
         else:
             argLst = args
         if argLst:
@@ -181,26 +216,29 @@ class CommandApp(object):
             self.notifying =1
             self.iap.init_app(midi_filename, audio_device)
             print("\a")
-            savStr = ""
+            sav_str = ""
             
         try:
             while 1:
-                key = valStr = ""
-                valStr = input("\r-> ")
-                if valStr == '': valStr = savStr
-                else: savStr = valStr
-                if valStr == " ": valStr = "pp"
-                key = valStr
+                key = val_str = ""
+                val_str = input("\r-> ")
+                if val_str == '': val_str = sav_str
+                else: sav_str = val_str
+                if val_str == " ": val_str = "pp"
+                key = val_str
 
-                if key == 'Q':
+                if key in ('q', 'Q'):
                     print("Bye Bye!!!")
                     if self.iap: self.iap.close_app()
                     self.beep()
                     break
+                elif key in ('?', 'h',):
+                    self.display(_help)
+
                 elif key == 'T': # for test
                     self.test()
                 else:
-                    self.parse_string(valStr)
+                    self.parse_string(val_str)
         
         finally:
             readln.write_historyfile()
