@@ -102,7 +102,7 @@ class InterfaceApp(object):
 
     #------------------------------------------------------------------------------
 
-    def test_synth_engine(self):
+    def test_synth_engine(self, *args, **kwargs):
         """
         play notes to the synth engine
         from InterfaceApp object
@@ -143,7 +143,7 @@ class InterfaceApp(object):
     
     #-------------------------------------------
 
-    def new_player(self):
+    def new_player(self, *args, **kwargs):
         """
         create new player
         from InterfaceApp
@@ -156,7 +156,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def play_pause(self):
+    def play_pause(self, *args, **kwargs):
         """ 
         play from Interface App 
         """
@@ -172,7 +172,7 @@ class InterfaceApp(object):
         self.notify(self.msg_app)
     #------------------------------------------------------------------------------
 
-    def stop(self):
+    def stop(self, *args, **kwargs):
         """
         stop from Interface App object
         """
@@ -184,7 +184,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def toggle_record(self):
+    def toggle_record(self, *args, **kwargs):
         """
         toggle record 
         from Interface App object
@@ -200,7 +200,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def goto_start(self):
+    def goto_start(self, *args, **kwargs):
         """
         goto start
         from Interface App object
@@ -212,7 +212,7 @@ class InterfaceApp(object):
         self.notify(self.msg_app)
     #------------------------------------------------------------------------------
 
-    def goto_end(self):
+    def goto_end(self, *args, **kwargs):
         """
         goto end
         from Interface App object
@@ -225,7 +225,7 @@ class InterfaceApp(object):
 
     #------------------------------------------------------------------------------
 
-    def goto_bar(self, num=0):
+    def goto_bar(self, num=0, *args, **kwargs):
         """
         goto bar number
         from Interface App object
@@ -243,7 +243,7 @@ class InterfaceApp(object):
 
     #------------------------------------------------------------------------------
         
-    def rewind(self, step=1):
+    def rewind(self, step=1, *args, **kwargs):
         """
         rewind to previous bar
         from InterfaceApp object
@@ -256,7 +256,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def forward(self, step=1):
+    def forward(self, step=1, *args, **kwargs):
         """
         next bar
         from Interface App object
@@ -269,7 +269,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def set_left_locator(self):
+    def set_left_locator(self, *args, **kwargs):
         """
         set left locator
         from Interface App object
@@ -283,7 +283,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def set_right_locator(self):
+    def set_right_locator(self, *args, **kwargs):
         """
         set right locator
         from Interface App object
@@ -297,7 +297,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def goto_left_locator(self):
+    def goto_left_locator(self, *args, **kwargs):
         """
         """
 
@@ -308,7 +308,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def goto_right_locator(self):
+    def goto_right_locator(self, *args, **kwargs):
         """
         """
 
@@ -319,7 +319,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def set_start_loop(self):
+    def set_start_loop(self, *args, **kwargs):
         """
         """
 
@@ -331,7 +331,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def set_end_loop(self):
+    def set_end_loop(self, *args, **kwargs):
         """
         """
 
@@ -343,7 +343,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def toggle_loop(self):
+    def toggle_loop(self, *args, **kwargs):
         """
         """
 
@@ -356,7 +356,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def toggle_click(self):
+    def toggle_click(self, *args, **kwargs):
         """
         """
 
@@ -372,7 +372,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def toggle_mute(self):
+    def toggle_mute(self, *args, **kwargs):
         """
         toggle mute
         from InterfaceApp object
@@ -388,7 +388,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def toggle_solo(self):
+    def toggle_solo(self, *args, **kwargs):
         """
         toggle solo
         from InterfaceApp object
@@ -404,7 +404,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def toggle_quantize(self):
+    def toggle_quantize(self, *args, **kwargs):
         """
         toggle quantize
         from InterfaceApp object
@@ -419,7 +419,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def quantize(self):
+    def quantize(self, *args, **kwargs):
         """
         toggle quantize
         from InterfaceApp object
@@ -431,7 +431,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def erase_track(self, tracknum=-1, startpos=0, endpos=0):
+    def erase_track(self, tracknum=-1, startpos=0, endpos=0, *args, **kwargs):
         """
         erase events track between time
         from Interface App object
@@ -484,7 +484,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def get_bar(self):
+    def get_bar(self, *args, **kwargs):
         """
         display the position in bar
         from Interface App object
@@ -498,7 +498,7 @@ class InterfaceApp(object):
     #-------------------------------------------
 
 
-    def print_status(self):
+    def print_status(self, *args, **kwargs):
         """
         display the status bar
         from Interface App object
@@ -519,7 +519,7 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def print_info(self):
+    def print_info(self, *args, **kwargs):
         """
         display midi file information
         from Interface App object
@@ -602,7 +602,7 @@ class InterfaceApp(object):
     
     #-------------------------------------------
 
-    def panic(self):
+    def panic(self, *args, **kwargs):
         """
         Set panic
         from Interface App object
@@ -615,7 +615,7 @@ class InterfaceApp(object):
     
     #-------------------------------------------
 
-    def open_file(self, filename):
+    def open_file(self, filename, *args, **kwargs):
         """
         open midi file 
         from InterfaceApp object
@@ -656,18 +656,22 @@ class InterfaceApp(object):
     
     #-------------------------------------------
  
-    def change_bpm(self, bpm):
+    def change_bpm(self, bpm=None, *args, **kwargs):
         """
         change the bpm
         from InterfaceApp object
         """
 
-        try:
-            bpm = float(bpm)
-        except ValueError:
-            return
-        self.curseq.set_bpm(bpm)
-        self.msg_app = "Change tempo: {}".format(bpm)
+        if bpm is None: 
+            bpm = self.curseq.get_bpm()
+            self.msg_app = f"Bpm: {bpm:.2f}"
+        else:
+            try:
+                bpm = float(bpm)
+            except ValueError:
+                return
+            self.curseq.set_bpm(bpm)
+            self.msg_app = f"Change Bpm: {bpm:.2f}"
         self.notify(self.msg_app)
 
     #-------------------------------------------

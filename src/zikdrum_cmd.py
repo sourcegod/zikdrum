@@ -62,7 +62,7 @@ class CommandApp(object):
                 "open_file", "new_player",
         ]
         
-        # global dictt
+        # global dict
         self._global_dic = {
                 ("demo", "test"): self.iap.test_synth_engine,
                 (".", "panic"): self.iap.panic,
