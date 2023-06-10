@@ -69,7 +69,7 @@ class CommandApp(object):
     #-------------------------------------------
     
     def display(self, msg=""):
-        print(msg)
+        print('\r', msg)
     
     #-------------------------------------------
 
@@ -106,11 +106,14 @@ class CommandApp(object):
         from CommandApp object
         """
         
+        """
         if not self.iap.player_is_ready() and\
                 funcName not in self._exclu_func:
                     msg = "Error Command: player is not ready."
                     self.display(msg)
                     return False
+        """
+
 
         return True
 
@@ -175,7 +178,6 @@ class CommandApp(object):
         if not audio_device:
             audio_device = "hw:1"
         if self.iap:
-            # self.iap = intapp.InterfaceApp(self)
             self.notifying =1
             self.iap.init_app(midi_filename, audio_device)
             print("\a")
@@ -184,7 +186,7 @@ class CommandApp(object):
         try:
             while 1:
                 key = valStr = ""
-                valStr = input("-> ")
+                valStr = input("\r-> ")
                 if valStr == '': valStr = savStr
                 else: savStr = valStr
                 if valStr == " ": valStr = "pp"
@@ -192,7 +194,7 @@ class CommandApp(object):
 
                 if key == 'Q':
                     print("Bye Bye!!!")
-                    self.iap.close_app()
+                    if self.iap: self.iap.close_app()
                     self.beep()
                     break
                 elif key == 'T': # for test
