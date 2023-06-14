@@ -49,8 +49,9 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
+        synth_type =0
         self.midi_man = midman.MidiManager(self)
-        self.midi_man.init_midi(self.filename, audio_device)
+        self.midi_man.init_midi(synth_type, self.filename, audio_device)
         self.midplay = midp
         self.player = midp.MidiPlayer(self)
         self.player.init_player(self.midi_man)
@@ -111,8 +112,8 @@ class InterfaceApp(object):
         self.msg_app = ""
         
         # """
-        if self.midi_man and self.midi_man.synth:
-            self.midi_man.synth.play_notes() # demo test for the synth
+        if self.midi_man:
+            self.midi_man.play_notes() # demo test for the synth
             self.msg_app = "Test Synth Engine"
         else:
             self.msg_app = "No Synth Engine"

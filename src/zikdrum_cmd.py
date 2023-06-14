@@ -212,6 +212,7 @@ class CommandApp(object):
 
         if not audio_device:
             audio_device = "hw:1"
+            audio_device = "plughw:1"
         if self.iap:
             self.notifying =1
             self.iap.init_app(midi_filename, audio_device)

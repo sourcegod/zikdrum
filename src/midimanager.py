@@ -74,6 +74,11 @@ class MidiFluid(object):
         time.sleep(0.5)
         """
 
+   
+        if self.fs is None: 
+            print("Error: No Synth Engine")
+            return
+        
         self.fs.program_change(0, 16)
         self.fs.noteon(0, 60, 100)
         time.sleep(1.0)
@@ -97,30 +102,33 @@ class MidiManager(object):
     """ Midi manager from mido module """
     def __init__(self, parent=None):
         self.parent = parent
-        self.synth = MidiFluid()
+        self.synth_type =0
+        self.synth = None
         self.chan =0
-        self.synth_type =1
         self.midi_in = None
         self.midi_out = None
 
     #-----------------------------------------
 
-    def init_midi(self, bank_filename, audio_device=""):
+    def init_midi(self, synth_type=0, bank_filename="", audio_device=""):
         """
         init synth 
         from MidiManager object
         """
 
+        self.synth_type = synth_type
         if self.synth_type == 0:
-            self.open_output(1)
+            self.open_output(2)
         else:
+            self.synth = MidiFluid()
             self.synth.init_synth(bank_filename, audio_device)
             # set channel 9 for drum percussion
 
     #-----------------------------------------
 
     def close_midi(self):
-        self.synth.close_synth()
+        if self.synth_type == 1:
+            self.synth.close_synth()
 
     #-----------------------------------------
 
@@ -370,13 +378,82 @@ class MidiManager(object):
                 msg.channel = chan
                 self.midi_out.send(msg)
 
-        else: # synth_type := 0
+        else: # synth_type = 0
             if self.synth.fs:
                 if chan == -1:
                     for chan in range(16):
                         self.synth.fs.cc(chan, control, 0)
                 else:
                     self.synth.fs.cc(chan, control, 0)
+
+    #-----------------------------------------
+
+    def note_on(self, chan, note, vel):
+        """
+        set Note On
+        from MidiManager object
+        """
+        
+        if self.synth_type == 0 and self.midi_out:
+            msg = mido.Message(type='note_on')
+            msg.channel = chan
+            msg.note = note
+            msg.velocity = vel
+            self.midi_out.send(msg)
+        else:
+           if self.synth.fs:
+               self.synth.fs.noteon(chan, note, vel)
+               # input callback function
+        self.chan = chan
+
+    #-----------------------------------------
+
+    def note_off(self, chan, note):
+        """
+        set Note Off
+        from MidiManager object
+        """
+        
+        if self.synth_type == 0 and self.midi_out:
+            msg = mido.Message(type='note_off')
+            msg.channel = chan
+            msg.note = note
+            self.midi_out.send(msg)
+        else:
+           if self.synth.fs:
+               self.synth.fs.noteoff(chan, note)
+               # input callback function
+        self.chan = chan
+
+    #-----------------------------------------
+
+
+    def play_notes(self):
+        """
+        Test notes
+        from MidiManager object
+        """
+
+        if self.synth_type == 0:
+            self.program_change(0, 16)
+            self.note_on(0, 60, 100)
+            time.sleep(1.0)
+            self.note_off(0, 60)
+            self.note_on(0, 67, 100)
+            time.sleep(1.0)
+            self.note_on(0, 76, 100)
+
+            time.sleep(1.0)
+
+            self.note_off(0, 60)
+            self.note_off(0, 67)
+            self.note_off(0, 76)
+            time.sleep(1.0)
+
+
+        elif self.synth_type == 1:
+            if self.synth: self.synth.play_notes()
+
 
     #-----------------------------------------
 
