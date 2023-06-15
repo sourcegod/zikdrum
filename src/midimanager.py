@@ -138,10 +138,13 @@ class MidiManager(object):
         from MidiManager object
         """
 
-        print("In ports:")
-        print(mido.get_input_names())
-        print("Out ports:")
-        print(mido.get_output_names())
+        print("Input Midi Ports:")
+        names = mido.get_input_names()
+        for (i, item) in enumerate(names): print(f"{i}: {item}")
+        
+        print("Output Midi Ports:")
+        names = mido.get_output_names()
+        for (i, item) in enumerate(names): print(f"{i}: {item}")
 
     #-----------------------------------------
     def get_in_ports(self):

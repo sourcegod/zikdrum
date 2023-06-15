@@ -57,7 +57,8 @@ class InterfaceApp(object):
         self.player.init_player(self.midi_man)
         self.curseq = self.player.curseq
         # self.midi_man.receive_from(port=1, callback=self.midi_man.input_callback)
-        self.midi_man.receive_from(port=1, callback=self.player.input_callback)
+        # Not receive messages temporary to test External Synth with Timidity ports.
+        # self.midi_man.receive_from(port=1, callback=self.player.input_callback)
         self.clip = midto.MidiClipboard(self.player)
         self.select = midto.MidiSelector(self.player)
         msg = "Init player"
@@ -529,6 +530,17 @@ class InterfaceApp(object):
         self.msg_app = self.curseq.get_properties()
         self.notify(self.msg_app)
     
+    #-------------------------------------------
+    
+    def print_midi_ports(self):
+        """
+        prints Midi Ports
+        from InterfaceApp object
+        """
+
+        if self.midi_man:
+            self.midi_man.print_ports()
+
     #-------------------------------------------
 
     def make_undo(self, title):

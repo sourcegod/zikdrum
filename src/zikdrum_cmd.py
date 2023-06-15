@@ -72,6 +72,7 @@ class CommandApp(object):
         self._info_dic = {
                 ("info", ): self.iap.print_info,
                 ("u", "sta", "status"): self.iap.print_status,
+                ("midp", "midiport"): self.iap.print_midi_ports,
                 ("bar", ): self.iap.get_bar,
                 ("bpm", ): self.iap.change_bpm,
         }
@@ -193,7 +194,7 @@ class CommandApp(object):
                 else:
                     return
             else: # not cmdFunc
-                msg = f"{funcName}: command not found."
+                msg = f"{funcName}: Command or Function not found."
                 self.display(msg)
 
             
