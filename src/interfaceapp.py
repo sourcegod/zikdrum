@@ -872,6 +872,56 @@ class InterfaceApp(object):
         self.notify(self.msg_app)
 
     #-------------------------------------------
+    
+    def change_midi_in(self, port_num=None, *args, **kwargs):
+        """
+        changing Midi Out Port
+        from InterfaceApp
+        """
+
+        if not self.midi_man: return
+
+        if port_num is None:
+            (num, name) = self.midi_man.get_inport_id()
+            self.msg_app = f"Midi In Port num: {num}, name: {name}"
+        else:
+            try:
+                port_num = int(port_num)
+                self.midi_man.open_input(port_num)
+                (num, name) = self.midi_man.get_inport_id()
+                self.msg_app = f"Midi In Port num: {num}, name: {name}"
+            except ValueError:
+                pass
+
+        self.notify(self.msg_app)
+
+    #-------------------------------------------
+
+    def change_midi_out(self, port_num=None, *args, **kwargs):
+        """
+        changing Midi Out Port
+        from InterfaceApp
+        """
+
+        if not self.midi_man: return
+
+        if port_num is None:
+            (num, name) = self.midi_man.get_outport_id()
+            self.msg_app = f"Midi Out Port num: {num}, name: {name}"
+        else:
+            try:
+                port_num = int(port_num)
+                self.midi_man.open_output(port_num)
+                (num, name) = self.midi_man.get_outport_id()
+                self.msg_app = f"Midi Out Port num: {num}, name: {name}"
+            except ValueError:
+                pass
+
+        self.notify(self.msg_app)
+
+    #-------------------------------------------
+
+
     def add_track_selection(self, tracknum):
         """
         adding track index to the tracks selection

@@ -107,12 +107,14 @@ class MidiManager(object):
         self.chan =0
         self._midi_in = None
         self._midi_out = None
-        self._in_port =0
-        self._out_port =0
+        self._inport_num =0
+        self._inport_name = ""
+        self._outport_num =0
+        self._outport_name = ""
 
     #-----------------------------------------
 
-    def init_midi(self, in_port=0, out_port=0, synth_type=0, bank_filename="", audio_device=""):
+    def init_midi(self, inport_num=0, outport_num=0, synth_type=0, bank_filename="", audio_device=""):
         """
         init synth 
         from MidiManager object
@@ -120,7 +122,7 @@ class MidiManager(object):
 
         self._synth_type = synth_type
         if self._synth_type == 0:
-            self.open_output(out_port)
+            self.open_output(outport_num)
         else:
             self._synth_obj = MidiFluid()
             self._synth_obj.init_synth(bank_filename, audio_device)
@@ -170,7 +172,7 @@ class MidiManager(object):
         output_names = mido.get_output_names()
         try:
             port_name = output_names[out_port]
-            self._out_port = out_port
+            self._outport_num = out_port
         except IndexError:
             print(f"Error: cannot open Midi Output Port : {out_port}")
         midi_out = mido.open_output(port_name)
@@ -179,7 +181,7 @@ class MidiManager(object):
 
     #-----------------------------------------
 
-    def open_input(self, port=0):
+    def open_input(self, port_num=0):
         """
         open midi input port
         from MidiManager object
@@ -187,17 +189,18 @@ class MidiManager(object):
 
         input_names = mido.get_input_names()
         try:
-            port_name = input_names[port]
+            port_name = input_names[port_num]
             self._midi_in = mido.open_input(port_name)
-            self._in_port = port
+            self._inport_num = port_num
+            self._inport_name = port_name
         except IndexError:
-            print("Error opening midi input Port {}".format(port))
+            print(f"Error: opening midi input Port {port_num}")
         
         return self._midi_in
 
     #-----------------------------------------
 
-    def open_output(self, out_port=0):
+    def open_output(self, port_num=0):
         """
         open midi output port
         from MidiManager object
@@ -205,14 +208,36 @@ class MidiManager(object):
 
         output_names = mido.get_output_names()
         try:
-            port_name = output_names[out_port]
+            port_name = output_names[port_num]
             self._midi_out = mido.open_output(port_name)
-            self._out_port = out_port
+            self._outport_num = port_num
+            self._outport_name = port_name
         except IndexError:
-            print(f"Error opening midi output Port {out_port}")
+            print(f"Error opening midi output Port {port_num}")
+            self._midi_out = None
         
         return self._midi_out
 
+    #-----------------------------------------
+
+    def  get_inport_id(self):
+        """
+        returns tuple with name and Midi Input port number 
+        from MidiManager object
+        """
+        
+        return (self._inport_num, self._inport_name)
+    
+    #-----------------------------------------
+
+    
+    def  get_outport_id(self):
+        """
+        returns tuple with name and Midi Out port number 
+        from MidiManager object
+        """
+        
+        return (self._outport_num, self._outport_name)
     #-----------------------------------------
 
 
@@ -319,7 +344,7 @@ class MidiManager(object):
 
     #-----------------------------------------
 
-    def receive_from(self, in_port=0, callback=None):
+    def receive_from(self, port_num=0, callback=None):
         """
         Get incoming messages - nonblocking interface
         with cb_func as callback
@@ -328,13 +353,14 @@ class MidiManager(object):
 
         inputnames = mido.get_input_names()
         try:
-            portname = inputnames[in_port]
-            self._in_port = in_port
+            port_name = inputnames[port_num]
+            self._inport_num = port_num
+            self._inport_name = port_name
         except IndexError:
-            print("Error: Midi input Port {} is not available".format(port))
+            print(f"Error: Midi input Port {port_num} is not available")
         
-        if portname:
-            midi_in = mido.open_input(portname)
+        if port_name:
+            midi_in = mido.open_input(port_name)
             self._midi_in = midi_in
             # or we can pass the callback function at the opening port:
             # in_port = mido.open_input(port_name, callback=cb_func)

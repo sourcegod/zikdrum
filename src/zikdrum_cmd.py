@@ -73,6 +73,8 @@ class CommandApp(object):
                 ("info", ): self.iap.print_info,
                 ("u", "sta", "status"): self.iap.print_status,
                 ("midp", "midiport"): self.iap.print_midi_ports,
+                ("midout", "midiout"): self.iap.change_midi_out,
+                ("midin", "midiin"): self.iap.change_midi_in,
                 ("bar", ): self.iap.get_bar,
                 ("bpm", ): self.iap.change_bpm,
         }
