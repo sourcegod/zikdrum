@@ -201,7 +201,7 @@ class CommandApp(object):
     #------------------------------------------------------------------------------
     
   
-    def main(self, midi_filename="", audio_device=""):
+    def main(self, midin_port, midout_port, synth_type, midi_filename="", audio_device=""):
         """ 
         main function 
         from MainApp object
@@ -216,7 +216,7 @@ class CommandApp(object):
             audio_device = "plughw:1"
         if self.iap:
             self.notifying =1
-            self.iap.init_app(midi_filename, audio_device)
+            self.iap.init_app(midin_port, midout_port, synth_type, midi_filename, audio_device)
             print("\a")
             sav_str = ""
             
@@ -266,6 +266,9 @@ class CommandApp(object):
 #========================================
 
 if __name__ == "__main__":
+    midin_port =0
+    midout_port =0
+    synth_type =0
     midi_filename = ""
     audio_device = "" # hw:0 by default
     app = CommandApp()
@@ -274,7 +277,7 @@ if __name__ == "__main__":
     if len(sys.argv) >= 3:
         audio_device = sys.argv[2]
         # print("voici filename", filename)
-    app.main(midi_filename, audio_device)
+    app.main(midin_port, midout_port, synth_type, midi_filename, audio_device)
     
 
 #------------------------------------------------------------------------------

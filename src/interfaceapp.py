@@ -43,15 +43,14 @@ class InterfaceApp(object):
 
     #-----------------------------------------
 
-    def init_app(self, midi_filename="", audio_device=""):
+    def init_app(self, midin_port=0, midout_port=0, synth_type=0, midi_filename="", audio_device=""):
         """
         init application
         from InterfaceApp object
         """
 
-        synth_type =0
         self.midi_man = midman.MidiManager(self)
-        self.midi_man.init_midi(synth_type, self.filename, audio_device)
+        self.midi_man.init_midi(midin_port, midout_port, synth_type, self.filename, audio_device)
         self.midplay = midp
         self.player = midp.MidiPlayer(self)
         self.player.init_player(self.midi_man)

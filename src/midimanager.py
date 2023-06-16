@@ -102,33 +102,41 @@ class MidiManager(object):
     """ Midi manager from mido module """
     def __init__(self, parent=None):
         self.parent = parent
-        self.synth_type =0
-        self.synth = None
+        self._synth_type =0
+        self._synth_obj = None
         self.chan =0
-        self.midi_in = None
-        self.midi_out = None
+        self._midi_in = None
+        self._midi_out = None
+        self._in_port =0
+        self._out_port =0
 
     #-----------------------------------------
 
-    def init_midi(self, synth_type=0, bank_filename="", audio_device=""):
+    def init_midi(self, in_port=0, out_port=0, synth_type=0, bank_filename="", audio_device=""):
         """
         init synth 
         from MidiManager object
         """
 
-        self.synth_type = synth_type
-        if self.synth_type == 0:
-            self.open_output(2)
+        self._synth_type = synth_type
+        if self._synth_type == 0:
+            self.open_output(out_port)
         else:
-            self.synth = MidiFluid()
-            self.synth.init_synth(bank_filename, audio_device)
+            self._synth_obj = MidiFluid()
+            self._synth_obj.init_synth(bank_filename, audio_device)
             # set channel 9 for drum percussion
 
     #-----------------------------------------
 
     def close_midi(self):
-        if self.synth_type == 1:
-            self.synth.close_synth()
+        if self._synth_type == 0:
+            self._synth_obj = None
+        elif self._synth_type == 1:
+            self._synth_obj.close_synth()
+            self._synth_obj = None
+
+        self._midi_in = None
+        self._midi_out = None
 
     #-----------------------------------------
 
@@ -147,6 +155,7 @@ class MidiManager(object):
         for (i, item) in enumerate(names): print(f"{i}: {item}")
 
     #-----------------------------------------
+
     def get_in_ports(self):
         return mido.get_input_names()
 
@@ -157,11 +166,16 @@ class MidiManager(object):
 
     #-----------------------------------------
 
-    def send_to(self, msg, port=0):
+    def send_to(self, msg, out_port=0):
         output_names = mido.get_output_names()
-        port_name = output_names[port]
-        out_port = mido.open_output(port_name)
-        out_port.send(msg)
+        try:
+            port_name = output_names[out_port]
+            self._out_port = out_port
+        except IndexError:
+            print(f"Error: cannot open Midi Output Port : {out_port}")
+        midi_out = mido.open_output(port_name)
+        self._midi_out = midi_out
+        midi_out.send(msg)
 
     #-----------------------------------------
 
@@ -174,15 +188,16 @@ class MidiManager(object):
         input_names = mido.get_input_names()
         try:
             port_name = input_names[port]
-            self.midi_in = mido.open_input(port_name)
+            self._midi_in = mido.open_input(port_name)
+            self._in_port = port
         except IndexError:
             print("Error opening midi input Port {}".format(port))
         
-        return self.midi_in
+        return self._midi_in
 
     #-----------------------------------------
 
-    def open_output(self, port=0):
+    def open_output(self, out_port=0):
         """
         open midi output port
         from MidiManager object
@@ -190,12 +205,13 @@ class MidiManager(object):
 
         output_names = mido.get_output_names()
         try:
-            port_name = output_names[port]
-            self.midi_out = mido.open_output(port_name)
+            port_name = output_names[out_port]
+            self._midi_out = mido.open_output(port_name)
+            self._out_port = out_port
         except IndexError:
-            print("Error opening midi output Port {}".format(port))
+            print(f"Error opening midi output Port {out_port}")
         
-        return self.midi_out
+        return self._midi_out
 
     #-----------------------------------------
 
@@ -220,11 +236,11 @@ class MidiManager(object):
         # print("Message in:", msg)
         type = msg.type
         bank =0
-        if self.synth_type == 0:
-            if self.midi_out:
-                self.midi_out.send(msg)
+        if self._synth_type == 0:
+            if self._midi_out:
+                self._midi_out.send(msg)
         else:
-            fs = self.synth.fs
+            fs = self._synth_obj.fs
             if type in ['note_on', 'note_off']:
                 chan = msg.channel
                 
@@ -261,11 +277,11 @@ class MidiManager(object):
         # print("Message in:", msg)
         type = msg.type
         bank =0
-        if self.synth_type == 0:
-            if self.midi_out:
-                self.midi_out.send(msg)
+        if self._synth_type == 0:
+            if self._midi_out:
+                self._midi_out.send(msg)
         else:
-            fs = self.synth.fs
+            fs = self._synth_obj.fs
             chan = msg.channel
             if type in ['note_on', 'note_off']:
                 chan = msg.channel
@@ -303,7 +319,7 @@ class MidiManager(object):
 
     #-----------------------------------------
 
-    def receive_from(self, port=0, callback=None):
+    def receive_from(self, in_port=0, callback=None):
         """
         Get incoming messages - nonblocking interface
         with cb_func as callback
@@ -312,16 +328,18 @@ class MidiManager(object):
 
         inputnames = mido.get_input_names()
         try:
-            portname = inputnames[port]
+            portname = inputnames[in_port]
+            self._in_port = in_port
         except IndexError:
             print("Error: Midi input Port {} is not available".format(port))
         
         if portname:
-            inport = mido.open_input(portname)
+            midi_in = mido.open_input(portname)
+            self._midi_in = midi_in
             # or we can pass the callback function at the opening port:
             # in_port = mido.open_input(port_name, callback=cb_func)
             if callback:
-                inport.callback = callback
+                midi_in.callback = callback
         
     #-----------------------------------------
 
@@ -331,14 +349,14 @@ class MidiManager(object):
         from MidiManager object
         """
         
-        if self.synth_type == 0 and self.midi_out:
+        if self._synth_type == 0 and self._midi_out:
             msg = mido.Message(type='program_change')
             msg.channel = chan
             msg.program = program
-            self.midi_out.send(msg)
+            self._midi_out.send(msg)
         else:
-           if self.synth.fs:
-               self.synth.fs.program_change(chan, program)
+           if self._synth_obj.fs:
+               self._synth_obj.fs.program_change(chan, program)
                # input callback function
         self.chan = chan
 
@@ -350,14 +368,14 @@ class MidiManager(object):
         from MidiManager object
         """
         
-        if self.synth_type == 0 and self.midi_out:
+        if self._synth_type == 0 and self._midi_out:
             msg = mido.Message(type='control_change')
             msg.channel = chan
             msg.value = bank
-            self.midi_out.send(msg)
+            self._midi_out.send(msg)
         else:
-            if self.synth.fs:
-                self.synth.fs.bank_select(chan, bank)
+            if self._synth_obj.fs:
+                self._synth_obj.fs.bank_select(chan, bank)
 
     #-----------------------------------------
         
@@ -368,7 +386,7 @@ class MidiManager(object):
         """
 
         control = 123 # all notes off
-        if self.synth_type == 0 and self.midi_out:
+        if self._synth_type == 0 and self._midi_out:
             msg = mido.Message(type='control_change')
             msg.channel =0
             msg.control = control
@@ -376,18 +394,18 @@ class MidiManager(object):
             if chan == -1: # all channels
                 for chan in range(16):
                     msg.channel = chan
-                    self.midi_out.send(msg)
+                    self._midi_out.send(msg)
             else:
                 msg.channel = chan
-                self.midi_out.send(msg)
+                self._midi_out.send(msg)
 
         else: # synth_type = 0
-            if self.synth.fs:
+            if self._synth_obj.fs:
                 if chan == -1:
                     for chan in range(16):
-                        self.synth.fs.cc(chan, control, 0)
+                        self._synth_obj.fs.cc(chan, control, 0)
                 else:
-                    self.synth.fs.cc(chan, control, 0)
+                    self._synth_obj.fs.cc(chan, control, 0)
 
     #-----------------------------------------
 
@@ -397,15 +415,15 @@ class MidiManager(object):
         from MidiManager object
         """
         
-        if self.synth_type == 0 and self.midi_out:
+        if self._synth_type == 0 and self._midi_out:
             msg = mido.Message(type='note_on')
             msg.channel = chan
             msg.note = note
             msg.velocity = vel
-            self.midi_out.send(msg)
+            self._midi_out.send(msg)
         else:
-           if self.synth.fs:
-               self.synth.fs.noteon(chan, note, vel)
+           if self._synth_obj.fs:
+               self._synth_obj.fs.noteon(chan, note, vel)
                # input callback function
         self.chan = chan
 
@@ -417,14 +435,14 @@ class MidiManager(object):
         from MidiManager object
         """
         
-        if self.synth_type == 0 and self.midi_out:
+        if self._synth_type == 0 and self._midi_out:
             msg = mido.Message(type='note_off')
             msg.channel = chan
             msg.note = note
-            self.midi_out.send(msg)
+            self._midi_out.send(msg)
         else:
-           if self.synth.fs:
-               self.synth.fs.noteoff(chan, note)
+           if self._synth_obj.fs:
+               self._synth_obj.fs.noteoff(chan, note)
                # input callback function
         self.chan = chan
 
@@ -437,7 +455,7 @@ class MidiManager(object):
         from MidiManager object
         """
 
-        if self.synth_type == 0:
+        if self._synth_type == 0:
             self.program_change(0, 16)
             self.note_on(0, 60, 100)
             time.sleep(1.0)
@@ -454,8 +472,8 @@ class MidiManager(object):
             time.sleep(1.0)
 
 
-        elif self.synth_type == 1:
-            if self.synth: self.synth.play_notes()
+        elif self._synth_type == 1:
+            if self._synth_obj: self._synth_obj.play_notes()
 
 
     #-----------------------------------------
@@ -465,4 +483,5 @@ class MidiManager(object):
 if __name__ == "__main__":
     mid = MidiManager()
     mid.init_midi("")
+    input("It's Ok")
 
