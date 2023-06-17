@@ -20,25 +20,25 @@ class MidiFluid(object):
 
     #-----------------------------------------
     
-    def init_synth(self, filename, audio_device=""):
+    def init_synth(self, filename, audio_out=""):
         """
         init Fluidsynth
         from MidiFluid object
         """
 
-        if not audio_device:
-            audio_device = "hw:0" # for default audio device
+        if not audio_out:
+            audio_out = "hw:0" # for default audio device
         # increasing gain for more audio output volume
         # default: 0.2
         audio_driver = "alsa"
         
-        # audio_device = "sysdefault"
-        # audio_device = "hw:0"
-        # audio_device = "hw:1"
+        # audio_out = "sysdefault"
+        # audio_out = "hw:0"
+        # audio_out = "hw:1"
         gain =3
         gain=1
         self.fs = fluidsynth.Synth(gain=gain)
-        self.fs.start(driver=audio_driver, device=audio_device)
+        self.fs.start(driver=audio_driver, device=audio_out)
         # print(f"voici filename: {filename}")
         filename = "/home/com/banks/sf2/fluidr3_gm.sf2"
         self.sfid = self.fs.sfload(filename, update_midi_preset=0)
@@ -111,22 +111,43 @@ class MidiManager(object):
         self._inport_name = ""
         self._outport_num =0
         self._outport_name = ""
+        self._audio_out = "hw:0"
 
     #-----------------------------------------
 
-    def init_midi(self, inport_num=0, outport_num=0, synth_type=0, bank_filename="", audio_device=""):
+    def init_midi(self, inport_num=0, outport_num=0, synth_type=0, bank_filename="", audio_out=""):
         """
         init synth 
         from MidiManager object
         """
 
-        self._synth_type = synth_type
+        if synth_type is None:
+            synth_type = self._synth_type
+        else:
+            self._synth_type = synth_type
+        if inport_num is None:
+            inport_num = self._inport_num
+        else:
+            self._inport_num = inport_num
+
+        if outport_num is None:
+            outport_num = self._outport_num
+        else:
+            self._outport_num = outport_num
+
+        if audio_out is None:
+            audio_out = self._audio_out
+        else:
+            self._audio_out = audio_out
+
+
         if self._synth_type == 0:
             self.open_output(outport_num)
         else:
+            self.close_synth()
             self._synth_obj = MidiFluid()
-            self._synth_obj.init_synth(bank_filename, audio_device)
-            # set channel 9 for drum percussion
+            self._synth_obj.init_synth(bank_filename, audio_out)
+        # set channel 9 for drum percussion
 
     #-----------------------------------------
 
@@ -220,7 +241,7 @@ class MidiManager(object):
 
     #-----------------------------------------
 
-    def  get_inport_id(self):
+    def get_inport_id(self):
         """
         returns tuple with name and Midi Input port number 
         from MidiManager object
@@ -229,9 +250,8 @@ class MidiManager(object):
         return (self._inport_num, self._inport_name)
     
     #-----------------------------------------
-
     
-    def  get_outport_id(self):
+    def get_outport_id(self):
         """
         returns tuple with name and Midi Out port number 
         from MidiManager object
@@ -240,6 +260,25 @@ class MidiManager(object):
         return (self._outport_num, self._outport_name)
     #-----------------------------------------
 
+    def get_synth_type(self):
+        """
+        returns synth type
+        from MidiManager object
+        """
+        
+        return self._synth_type
+
+    #-----------------------------------------
+
+    def get_synth_id(self):
+        """
+        returns tuple with synth type, and Midi Out port number, and Audio Device
+        from MidiManager object
+        """
+        
+        return (self._synth_type, self._outport_num, self._audio_out)
+    
+    #-----------------------------------------
 
     def get_message_blocking(self, port=0):
         # Get incoming messages - blocking interface

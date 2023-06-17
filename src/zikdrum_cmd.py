@@ -73,8 +73,9 @@ class CommandApp(object):
                 ("info", ): self.iap.print_info,
                 ("u", "sta", "status"): self.iap.print_status,
                 ("midp", "midiport"): self.iap.print_midi_ports,
-                ("midout", "midiout"): self.iap.change_midi_out,
                 ("midin", "midiin"): self.iap.change_midi_in,
+                ("midout", "midiout"): self.iap.change_midi_out,
+                ("synth", ): self.iap.change_synth,
                 ("bar", ): self.iap.get_bar,
                 ("bpm", ): self.iap.change_bpm,
         }
@@ -268,18 +269,18 @@ class CommandApp(object):
 #========================================
 
 if __name__ == "__main__":
-    midin_port =0
-    midout_port =0
+    inport_num =0
+    outport_num =2
     synth_type =0
     midi_filename = ""
-    audio_device = "" # hw:0 by default
+    audio_out = "" # hw:0 by default
     app = CommandApp()
     if len(sys.argv) >= 2:
         midi_filename = sys.argv[1]
     if len(sys.argv) >= 3:
-        audio_device = sys.argv[2]
+        audio_out = sys.argv[2]
         # print("voici filename", filename)
-    app.main(midin_port, midout_port, synth_type, midi_filename, audio_device)
+    app.main(inport_num, outport_num, synth_type, midi_filename, audio_out)
     
 
 #------------------------------------------------------------------------------
