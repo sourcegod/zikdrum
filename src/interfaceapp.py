@@ -112,11 +112,11 @@ class InterfaceApp(object):
         self.msg_app = ""
         
         # """
-        if self.midi_man:
+        if self.midi_man and self.midi_man._synth_obj:
             self.midi_man.play_notes() # demo test for the synth
             self.msg_app = "Test Synth Engine"
         else:
-            self.msg_app = "No Synth Engine"
+            self.msg_app = "No Synth Engine is available."
         # """
 
         self.notify(self.msg_app)
