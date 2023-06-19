@@ -167,6 +167,17 @@ class MidiFluid(object):
 
     #-----------------------------------------
 
+    def bank_change(self, chan, bank):
+        """
+        change bank
+        from MidiFluid object
+        """
+        
+        if self.fs is None: return
+        self.fs.bank_select(chan, bank)
+
+    #-----------------------------------------
+ 
     def panic(self, chan=-1):
         """
         set all notes off controller on al channels
@@ -313,6 +324,20 @@ class MiniSynth(object):
 
     #-----------------------------------------
 
+    def bank_change(self, chan, bank):
+        """
+        change bank
+        from MiniSynth object
+        """
+        
+        if self._midi_out is None: return
+        msg = mido.Message(type='control_change')
+        msg.channel = chan
+        msg.value = bank
+        self._midi_out.send(msg)
+
+    #-----------------------------------------
+ 
     def panic(self, chan=-1):
         """
         set all notes off controller on al channels
@@ -637,14 +662,8 @@ class MidiManager(object):
         from MidiManager object
         """
         
-        if self._synth_type == 0 and self._midi_out:
-            msg = mido.Message(type='control_change')
-            msg.channel = chan
-            msg.value = bank
-            self._midi_out.send(msg)
-        elif self._synth_type ==1:
-            if self._synth_obj.fs:
-                self._synth_obj.fs.bank_select(chan, bank)
+        if self._synth_obj is None: return
+        self._synth_obj.bank_change(chan, bank)
 
     #-----------------------------------------
         
