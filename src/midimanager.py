@@ -53,8 +53,11 @@ class MidiFluid(object):
         """ 
         close fluidsynth 
         """
+
         if self.fs:
+            print("Warning: Deleting FluidSynth")
             self.fs.delete()
+            self.fs = None
 
     #-----------------------------------------
     
@@ -259,6 +262,7 @@ class MidiManager(object):
 
 
         if self._synth_type == 0:
+            self.close_midi()
             self._synth_obj = GenericSynth()
             self._synth_obj.init_synth(outport_num)
         else:
@@ -270,12 +274,9 @@ class MidiManager(object):
     #-----------------------------------------
 
     def close_midi(self):
-        if self._synth_type == 0:
+        if self._synth_obj:    
+            self._synth_obj.close_synth()
             self._synth_obj = None
-        elif self._synth_type == 1:
-            if self._synth_obj:
-                self._synth_obj.close_synth()
-                self._synth_obj = None
 
         self._midi_in = None
         self._midi_out = None
