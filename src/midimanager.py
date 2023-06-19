@@ -389,7 +389,6 @@ class MiniSynth(object):
 #========================================
 
 
-
 class MidiManager(object):
     """ Midi manager from mido module """
     def __init__(self, parent=None):
@@ -471,12 +470,12 @@ class MidiManager(object):
 
     #-----------------------------------------
 
-    def get_in_ports(self):
+    def get_input_ports(self):
         return mido.get_input_names()
 
     #-----------------------------------------
 
-    def get_out_ports(self):
+    def get_output_ports(self):
         return mido.get_output_names()
 
     #-----------------------------------------
