@@ -927,10 +927,12 @@ class InterfaceApp(object):
         from InterfaceApp
         """
 
+        initing =0
         if not self.midi_man: return
-        if synth_type is not None: 
+        if synth_type is not None:
             try:
                 synth_type = int(synth_type)
+                initing =1
             except ValueError:
                 synth_type = None
 
@@ -939,9 +941,15 @@ class InterfaceApp(object):
                 outport_num = int(outport_num)
             except ValueError:
                 outport_num = None
-        self.midi_man.init_midi(synth_type=synth_type, outport_num=outport_num, audio_out=audio_out)
-        (synth_type, outport_num, audio_out) = self.midi_man.get_synth_id()
-        self.msg_app = f"Init Synth, type: {synth_type}, Midi Out Port: {outport_num}, Audio Output: {audio_out}"
+        if not initing:
+            # getting only Synth values
+            (synth_type, outport_num, audio_out) = self.midi_man.get_synth_id()
+            self.msg_app = f"Synth State, type: {synth_type}, Midi Out Port: {outport_num}, Audio Output: {audio_out}"
+        else:
+            self.midi_man.init_midi(synth_type=synth_type, outport_num=outport_num, audio_out=audio_out)
+            (synth_type, outport_num, audio_out) = self.midi_man.get_synth_id()
+            self.msg_app = f"Init Synth, type: {synth_type}, Midi Out Port: {outport_num}, Audio Output: {audio_out}"
+        
         self.notify(self.msg_app)
 
     #-------------------------------------------

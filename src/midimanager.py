@@ -51,7 +51,8 @@ class MidiFluid(object):
 
     def close_synth(self):
         """ 
-        close fluidsynth 
+        close fluidsynth Engine
+        from MidiFluid object
         """
 
         if self.fs:
@@ -104,6 +105,35 @@ class MidiFluid(object):
     
     #-----------------------------------------
 
+    def send_msg(self, msg):
+        """
+        send incomming message to fluidsynth
+        from MidiFluid object
+        """
+        
+        type = msg.type
+        bank =0
+        chan =0
+        fs = self.fs
+        if type in ['note_on', 'note_off']:
+            chan = msg.channel
+            
+            note = msg.note
+            msg.velocity =100
+            vel = msg.velocity
+            args = [chan, note, vel]
+        if type == "note_on":
+            fs.noteon(chan, msg.note, msg.velocity)
+        elif type == "note_off":
+            fs.noteoff(chan, msg.note)
+        elif type == "program_change":
+            fs.program_change(chan, msg.program)
+        elif type == "control_change":
+            fs.cc(chan, msg.control, msg.value)
+        elif type == "pitchwheel":
+            fs.pitch_bend(chan, msg.pitch)
+
+    #-----------------------------------------
 
 #========================================
 
@@ -131,6 +161,7 @@ class GenericSynth(object):
     def close_synth(self):
         """ 
         close GenericSynth 
+        from GenericSynth object
         """
         
         self._midi_out = None
@@ -209,6 +240,16 @@ class GenericSynth(object):
         msg = mido.Message(type='note_off')
         msg.channel = chan
         msg.note = note
+        self._midi_out.send(msg)
+
+    #-----------------------------------------
+
+    def send_msg(self, msg):
+        """
+        send incomming message to Midi Out
+        from GenericSynth object
+        """
+        
         self._midi_out.send(msg)
 
     #-----------------------------------------
@@ -458,38 +499,7 @@ class MidiManager(object):
         from MidiManager object
         """
         
-        # print("Message in:", msg)
-        type = msg.type
-        bank =0
-        if self._synth_type == 0:
-            if self._midi_out:
-                self._midi_out.send(msg)
-        else:
-            fs = self._synth_obj.fs
-            chan = msg.channel
-            if type in ['note_on', 'note_off']:
-                chan = msg.channel
-                
-                note = msg.note
-                msg.velocity =100
-                vel = msg.velocity
-                args = [chan, note, vel]
-            if type == "note_on":
-                fs.noteon(chan, msg.note, msg.velocity)
-            elif type == "note_off":
-                fs.noteoff(chan, msg.note)
-            elif type == "program_change":
-                fs.program_change(chan, msg.program)
-            elif type == "control_change":
-                fs.cc(self.chan, msg.control, msg.value)
-            elif type == "pitchwheel":
-                fs.pitch_bend(self.chan, msg.pitch)
-
-        # notify toplevel application
-        """
-        if self.parent:
-            self.parent.notify(msg)
-        """
+        self._synth_obj.send_msg(msg)
 
     #-----------------------------------------
 
