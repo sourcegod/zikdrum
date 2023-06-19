@@ -601,7 +601,6 @@ class MidiManager(object):
     def output_message(self, msg):
         """
         Deprecated function
-        output playback message to fluidsynth 
         distinguishing message channel
         send immediately messages without test
         from MidiManager object
@@ -611,11 +610,23 @@ class MidiManager(object):
 
     #-----------------------------------------
 
+    def send_msg(self, msg):
+        """
+        Sending midi messages with test
+        distinguishing message channel
+        from MidiManager object
+        """
+        
+        if self._synth_obj is None: return
+        self._synth_obj.send_msg(msg)
+
+    #-----------------------------------------
+
+
     def send_imm(self, msg):
         """
-        output playback message to fluidsynth 
         distinguishing message channel
-        send immediately messages without test
+        Send immediately messages without test
         from MidiManager object
         """
         
