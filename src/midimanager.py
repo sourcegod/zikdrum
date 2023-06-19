@@ -600,6 +600,7 @@ class MidiManager(object):
 
     def output_message(self, msg):
         """
+        Deprecated function
         output playback message to fluidsynth 
         distinguishing message channel
         send immediately messages without test
@@ -609,6 +610,19 @@ class MidiManager(object):
         self._synth_obj.send_imm(msg)
 
     #-----------------------------------------
+
+    def send_imm(self, msg):
+        """
+        output playback message to fluidsynth 
+        distinguishing message channel
+        send immediately messages without test
+        from MidiManager object
+        """
+        
+        self._synth_obj.send_imm(msg)
+
+    #-----------------------------------------
+
 
     def input_callback(self, msg):
         """
@@ -673,8 +687,8 @@ class MidiManager(object):
         from MidiManager object
         """
 
-        if self._synth_obj:
-            self._synth_obj.panic(chan)
+        if self._synth_obj is None: return
+        self._synth_obj.panic(chan)
         
         """
         control = 123 # all notes off
