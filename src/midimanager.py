@@ -72,39 +72,6 @@ class MidiFluid(object):
 
     #-----------------------------------------
 
-    def program_change(self, chan, program):
-        """
-        Send program change to FluidSynth
-        from MidiFluid object
-        """
-
-        if self.fs is None: return
-        self.fs.program_change(chan, program)
-
-    #-----------------------------------------
-
-    def note_on(self, chan, note, vel):
-        """
-        send note on to FluidSynth
-        from MidiFluid object
-        """
-
-        if self.fs is None: return
-        self.fs.noteon(chan, note, vel)
-    
-    #-----------------------------------------
- 
-    def note_off(self, chan, note):
-        """
-        send note off to FluidSynth
-        from MidiFluid object
-        """
-
-        if self.fs is None: return
-        self.fs.noteoff(chan, note)
-    
-    #-----------------------------------------
-
     def send_msg(self, msg):
         """
         send incomming message with test, to fluidsynth
@@ -136,7 +103,6 @@ class MidiFluid(object):
 
     #-----------------------------------------
 
-
     def send_imm(self, msg):
         """
         send incomming message immediately without test, to fluidsynth
@@ -166,6 +132,50 @@ class MidiFluid(object):
             fs.pitch_bend(chan, msg.pitch)
 
     #-----------------------------------------
+
+    def note_on(self, chan, note, vel):
+        """
+        send note on to FluidSynth
+        from MidiFluid object
+        """
+
+        if self.fs is None: return
+        self.fs.noteon(chan, note, vel)
+    
+    #-----------------------------------------
+ 
+    def note_off(self, chan, note):
+        """
+        send note off to FluidSynth
+        from MidiFluid object
+        """
+
+        if self.fs is None: return
+        self.fs.noteoff(chan, note)
+    
+    #-----------------------------------------
+
+    def program_change(self, chan, program):
+        """
+        Send program change to FluidSynth
+        from MidiFluid object
+        """
+
+        if self.fs is None: return
+        self.fs.program_change(chan, program)
+
+    #-----------------------------------------
+
+    def control_change(self, chan, control, val):
+        """
+        Sending Control Change event
+        from MidiFluid object
+        """
+
+        if self.fs is None: return
+        self.fs.cc(chan, control, val)
+    
+#-----------------------------------------
 
     def bank_change(self, chan, bank):
         """
@@ -258,20 +268,27 @@ class MiniSynth(object):
 
     #-----------------------------------------
 
-    def program_change(self, chan, program):
+    def send_msg(self, msg):
         """
-        set program change
+        send incomming message with test, to Midi Out
         from MiniSynth object
         """
         
-        # No test for performance
-        msg = mido.Message(type='program_change')
-        msg.channel = chan
-        msg.program = program
-        self._midi_out.send(msg)
-        self._chan = chan
+        if self._midi_out:
+            self._midi_out.send(msg)
 
     #-----------------------------------------
+
+    def send_imm(self, msg):
+        """
+        send incomming message immediately without test, to Midi Out
+        from MiniSynth object
+        """
+        
+        self._midi_out.send(msg)
+
+    #-----------------------------------------
+
 
     def note_on(self, chan, note, vel):
         """
@@ -303,25 +320,34 @@ class MiniSynth(object):
 
     #-----------------------------------------
 
-    def send_msg(self, msg):
+    def program_change(self, chan, program):
         """
-        send incomming message with test, to Midi Out
+        set program change
         from MiniSynth object
         """
         
-        if self._midi_out:
-            self._midi_out.send(msg)
+        # No test for performance
+        msg = mido.Message(type='program_change')
+        msg.channel = chan
+        msg.program = program
+        self._midi_out.send(msg)
+        self._chan = chan
 
     #-----------------------------------------
 
-    def send_imm(self, msg):
+    def control_change(self, chan, control, val):
         """
-        send incomming message immediately without test, to Midi Out
+        Sending Control Change event
         from MiniSynth object
         """
-        
-        self._midi_out.send(msg)
 
+        if self._midi_out is None: return
+        msg = mido.Message(type='control_change')
+        msg.channel = chan
+        msg.control = control
+        msg.value = val
+        self._midi_out.send(msg)
+    
     #-----------------------------------------
 
     def bank_change(self, chan, bank):
@@ -691,7 +717,18 @@ class MidiManager(object):
         self._synth_obj.bank_change(chan, bank)
 
     #-----------------------------------------
+
+    def control_change(self, chan, control, val):
+        """
+        Send Control Change
+        from MidiManager object
+        """
         
+        if self._synth_obj is None: return
+        self._synth_obj.control_change(chan, control, val)
+
+    #-----------------------------------------
+         
     def panic(self, chan=-1):
         """
         set all notes off controller on al channels
