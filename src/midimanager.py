@@ -167,9 +167,25 @@ class MidiFluid(object):
 
     #-----------------------------------------
 
+    def panic(self, chan=-1):
+        """
+        set all notes off controller on al channels
+        from MidiFluid object
+        """
+
+        control = 123 # all notes off
+        if self.fs:
+            if chan == -1:
+                for chan in range(16):
+                    self.fs.cc(chan, control, 0)
+            else:
+                self.fs.cc(chan, control, 0)
+
+    #-----------------------------------------
+
 #========================================
 
-class GenericSynth(object):
+class MiniSynth(object):
     """ External Synth Manager  """
     def __init__(self):
         self._chan =0
@@ -180,8 +196,8 @@ class GenericSynth(object):
     
     def init_synth(self, outport_num=None):
         """
-        init GenericSynth
-        from GenericSynth object
+        init MiniSynth
+        from MiniSynth object
         """
 
         if outport_num is None:
@@ -192,8 +208,8 @@ class GenericSynth(object):
 
     def close_synth(self):
         """ 
-        close GenericSynth 
-        from GenericSynth object
+        close MiniSynth 
+        from MiniSynth object
         """
         
         self._midi_out = None
@@ -204,7 +220,7 @@ class GenericSynth(object):
     def open_output(self, port_num=0):
         """
         open Midi Output Port
-        from GenericSynth object
+        from MiniSynth object
         """
 
         output_names = mido.get_output_names()
@@ -224,7 +240,7 @@ class GenericSynth(object):
     def is_active(self):
         """
         returns FluidSynth active
-        from GenericSynth object
+        from MiniSynth object
         """
 
         return self._midi_out
@@ -234,7 +250,7 @@ class GenericSynth(object):
     def program_change(self, chan, program):
         """
         set program change
-        from GenericSynth object
+        from MiniSynth object
         """
         
         # No test for performance
@@ -249,7 +265,7 @@ class GenericSynth(object):
     def note_on(self, chan, note, vel):
         """
         set Note On
-        from GenericSynth object
+        from MiniSynth object
         """
         
         # No test for performance
@@ -279,7 +295,7 @@ class GenericSynth(object):
     def send_msg(self, msg):
         """
         send incomming message with test, to Midi Out
-        from GenericSynth object
+        from MiniSynth object
         """
         
         if self._midi_out:
@@ -290,13 +306,34 @@ class GenericSynth(object):
     def send_imm(self, msg):
         """
         send incomming message immediately without test, to Midi Out
-        from GenericSynth object
+        from MiniSynth object
         """
         
         self._midi_out.send(msg)
 
     #-----------------------------------------
 
+    def panic(self, chan=-1):
+        """
+        set all notes off controller on al channels
+        from MiniSynth object
+        """
+
+        control = 123 # all notes off
+        if self._midi_out:
+            msg = mido.Message(type='control_change')
+            msg.channel =0
+            msg.control = control
+            msg.value =0
+            if chan == -1: # all channels
+                for chan in range(16):
+                    msg.channel = chan
+                    self._midi_out.send(msg)
+            else:
+                msg.channel = chan
+                self._midi_out.send(msg)
+
+    #-----------------------------------------
 
 #========================================
 
@@ -347,7 +384,7 @@ class MidiManager(object):
 
         if self._synth_type == 0:
             self.close_midi()
-            self._synth_obj = GenericSynth()
+            self._synth_obj = MiniSynth()
             self._synth_obj.init_synth(outport_num)
         else:
             self.close_midi()
@@ -589,16 +626,8 @@ class MidiManager(object):
         from MidiManager object
         """
         
-        if self._synth_type == 0 and self._midi_out:
-            msg = mido.Message(type='program_change')
-            msg.channel = chan
-            msg.program = program
-            self._midi_out.send(msg)
-        elif self._synth_type == 1:
-           if self._synth_obj.fs:
-               self._synth_obj.fs.program_change(chan, program)
-               # input callback function
-        self.chan = chan
+        if self._synth_obj is None: return
+        self._synth_obj.program_change(chan, program)
 
     #-----------------------------------------
 
@@ -625,6 +654,10 @@ class MidiManager(object):
         from MidiManager object
         """
 
+        if self._synth_obj:
+            self._synth_obj.panic(chan)
+        
+        """
         control = 123 # all notes off
         if self._synth_type == 0 and self._midi_out:
             msg = mido.Message(type='control_change')
@@ -646,6 +679,8 @@ class MidiManager(object):
                         self._synth_obj.fs.cc(chan, control, 0)
                 else:
                     self._synth_obj.fs.cc(chan, control, 0)
+        """
+
 
     #-----------------------------------------
 
@@ -674,30 +709,6 @@ class MidiManager(object):
         synth_obj.note_off(0, 76)
 
         time.sleep(1.0)
-
-        """
-        self._synth_obj.play_notes()
-        if self._synth_type == 0:
-            self.program_change(0, 16)
-            self.note_on(0, 60, 100)
-            time.sleep(1.0)
-            self.note_off(0, 60)
-            self.note_on(0, 67, 100)
-            time.sleep(1.0)
-            self.note_on(0, 76, 100)
-
-            time.sleep(1.0)
-
-            self.note_off(0, 60)
-            self.note_off(0, 67)
-            self.note_off(0, 76)
-            time.sleep(1.0)
-
-
-        elif self._synth_type == 1:
-            if self._synth_obj: self._synth_obj.play_notes()
-        """
-
 
     #-----------------------------------------
 
