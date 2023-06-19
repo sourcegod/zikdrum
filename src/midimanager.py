@@ -107,7 +107,39 @@ class MidiFluid(object):
 
     def send_msg(self, msg):
         """
-        send incomming message to fluidsynth
+        send incomming message with test, to fluidsynth
+        from MidiFluid object
+        """
+        
+        if self.fs is None: return
+        type = msg.type
+        bank =0
+        chan =0
+        fs = self.fs
+        if type in ['note_on', 'note_off']:
+            chan = msg.channel
+            
+            note = msg.note
+            msg.velocity =100
+            vel = msg.velocity
+            args = [chan, note, vel]
+        if type == "note_on":
+            fs.noteon(chan, msg.note, msg.velocity)
+        elif type == "note_off":
+            fs.noteoff(chan, msg.note)
+        elif type == "program_change":
+            fs.program_change(chan, msg.program)
+        elif type == "control_change":
+            fs.cc(chan, msg.control, msg.value)
+        elif type == "pitchwheel":
+            fs.pitch_bend(chan, msg.pitch)
+
+    #-----------------------------------------
+
+
+    def send_imm(self, msg):
+        """
+        send incomming message immediately without test, to fluidsynth
         from MidiFluid object
         """
         
@@ -246,7 +278,18 @@ class GenericSynth(object):
 
     def send_msg(self, msg):
         """
-        send incomming message to Midi Out
+        send incomming message with test, to Midi Out
+        from GenericSynth object
+        """
+        
+        if self._midi_out:
+            self._midi_out.send(msg)
+
+    #-----------------------------------------
+
+    def send_imm(self, msg):
+        """
+        send incomming message immediately without test, to Midi Out
         from GenericSynth object
         """
         
@@ -454,6 +497,7 @@ class MidiManager(object):
 
     def send_message(self, msg):
         """
+        Deprecated function
         send incomming message to fluidsynth
         from MidiManager object
         """
@@ -496,10 +540,11 @@ class MidiManager(object):
         """
         output playback message to fluidsynth 
         distinguishing message channel
+        send immediately messages without test
         from MidiManager object
         """
         
-        self._synth_obj.send_msg(msg)
+        self._synth_obj.send_imm(msg)
 
     #-----------------------------------------
 
