@@ -195,12 +195,30 @@ class MidiFluid(object):
         """
 
         control = 123 # all notes off
-        if self.fs:
-            if chan == -1:
-                for chan in range(16):
-                    self.fs.cc(chan, control, 0)
-            else:
+        if self.fs is None: return
+        if chan == -1:
+            for chan in range(16):
                 self.fs.cc(chan, control, 0)
+        else:
+            self.fs.cc(chan, control, 0)
+
+    #-----------------------------------------
+
+    def reset(self, chan=-1):
+        """
+        set all notes off controller, reset all programs on al channels
+        from MidiFluid object
+        """
+
+        control = 123 # all notes off
+        if self.fs is None: return
+        if chan == -1:
+            for chan in range(16):
+                self.fs.cc(chan, control, 0)
+                self.fs.program_change(chan, 0)
+        else:
+            self.fs.cc(chan, control, 0)
+            self.fs.program_change(chan, 0)
 
     #-----------------------------------------
 
@@ -371,20 +389,50 @@ class MiniSynth(object):
         """
 
         control = 123 # all notes off
-        if self._midi_out:
-            msg = mido.Message(type='control_change')
-            msg.channel =0
-            msg.control = control
-            msg.value =0
-            if chan == -1: # all channels
-                for chan in range(16):
-                    msg.channel = chan
-                    self._midi_out.send(msg)
-            else:
+        if self._midi_out is None: return
+        msg = mido.Message(type='control_change')
+        msg.channel =0
+        msg.control = control
+        msg.value =0
+        if chan == -1: # all channels
+            for chan in range(16):
                 msg.channel = chan
                 self._midi_out.send(msg)
+        else:
+            msg.channel = chan
+            self._midi_out.send(msg)
 
     #-----------------------------------------
+
+    def reset(self, chan=-1):
+        """
+        reset all notes off controller, all programs on al channels
+        from MiniSynth object
+        """
+
+        control = 123 # all notes off
+        if self._midi_out is None: return
+        msg = mido.Message(type='control_change')
+        msg.channel =0
+        msg.control = control
+        msg.value =0
+        msg1 = mido.Message(type='program_change')
+        msg1.channel =0
+        msg1.program =0
+        if chan == -1: # all channels
+            for chan in range(16):
+                msg.channel = chan
+                self._midi_out.send(msg)
+                msg1.channel = chan
+                self._midi_out.send(msg1)
+        else:
+            msg.channel = chan
+            self._midi_out.send(msg)
+            msg1.channel = chan
+            self._midi_out.send(msg1)
+
+    #-----------------------------------------
+
 
 #========================================
 
@@ -395,7 +443,9 @@ class MidiManager(object):
         self.parent = parent
         self._synth_type =0
         self._synth_obj = None
-        self.chan =0
+        self._chan =0
+        self._prog =0
+        self._bank =0
         self._midi_in = None
         self._midi_out = None
         self._inport_num =0
@@ -720,14 +770,56 @@ class MidiManager(object):
         
     #-----------------------------------------
 
-    def program_change(self, chan, program):
+    def note_on(self, key=60, vel=100, chan=1, *args, **kwargs):
+        """
+        set note on 
+        from MidiManager object
+        """
+
+        if self._synth_obj:
+            self._synth_obj.note_on(chan, key, vel)
+            self._notify(f"noteon, key: {key}, vel: {vel}, chan: {chan}")
+
+    #-----------------------------------------
+
+    def note_off(self, key=60, chan=1, *args, **kwargs):
+        """
+        set note off
+        from MidiManager object
+        """
+
+        if self._synth_obj:
+            self._synth_obj.note_off(chan, key)
+            self._notify(f"noteoff, key: {key}, chan: {chan}")
+
+    #-----------------------------------------
+    
+    def note(self, key=60, vel=100, dur=1, chan=1, *args, **kwargs):
+        """
+        set note with duration
+        from MidiManager object
+        """
+        # print("key: ", repr(key))
+
+        if self._synth_obj:
+            self.note_on(key, vel, chan)
+            time.sleep(self._tempo * dur)
+            self.note_off(key, chan)
+            self._notify(f"note, key: {key}, vel: {vel}, dur: {dur}, chan: {chan}")
+
+    #-----------------------------------------
+
+    def program_change(self, chan, prog, *args, **kwargs):
         """
         set program change
         from MidiManager object
         """
         
         if self._synth_obj is None: return
-        self._synth_obj.program_change(chan, program)
+        self._synth_obj.program_change(chan, prog)
+        self._prog = prog
+        self._chan = chan
+        self._notify(f"Program Change: {prog}, chan: {chan}")
 
     #-----------------------------------------
 
@@ -817,96 +909,18 @@ class MidiManager(object):
 
     #-----------------------------------------
 
-
-    def prog(self, _prog=0, chan=1, *args, **kwargs):
-        """
-        set program change
-        from MidiManager object
-        """
-
-        chan = int(chan)
-        _prog = int(_prog)
-        if self._synth_obj:
-            self._synth_obj.program_change(chan, _prog)
-            self._chan = chan
-            self._notify(f"prog: {_prog}, chan: {chan}")
-
-    #------------------------------------------------------------------------------
- 
-
-    def note_on(self, key=60, vel=100, chan=1, *args, **kwargs):
-        """
-        set note on 
-        from MidiManager object
-        """
-
-        chan = int(chan)
-        key = int(key)
-        vel = int(vel)
-
-        if self._synth_obj:
-            self._synth_obj.note_on(chan, key, vel)
-            self._notify(f"noteon, key: {key}, vel: {vel}, chan: {chan}")
-
-    #-----------------------------------------
-
-    def note_off(self, key=60, chan=1, *args, **kwargs):
-        """
-        set note off
-        from MidiManager object
-        """
-
-        chan = int(chan)
-        key = int(key)
-
-        if self._synth_obj:
-            self._synth_obj.note_off(chan, key)
-            self._notify(f"noteoff, key: {key}, chan: {chan}")
-
-    #-----------------------------------------
-    
-    def note(self, key=60, vel=100, dur=1, chan=1, *args, **kwargs):
-        """
-        set note with duration
-        from MidiManager object
-        """
-        # print("key: ", repr(key))
-        dur = float(dur)
-        if self._synth_obj:
-            self.note_on(key, vel, chan)
-            time.sleep(self._tempo * dur)
-            self.note_off(key, chan)
-            self._notify(f"note, key: {key}, vel: {vel}, dur: {dur}, chan: {chan}")
-
-    #-----------------------------------------
-
-
-    def cc(self, ctrl=7, val=100, chan=1, *args, **kwargs):
-        """
-        set note control change
-        from MidiManager object
-        """
-        
-        chan = int(chan)
-        ctrl = int(ctrl)
-        val = int(val)
-
-        if self._synth_obj:
-            self._synth_obj.control_change(chan, ctrl, val)
-            self._notify(f"cc, ctrl: {ctrl}, val: {val}, chan: {chan}")
-
-    #-----------------------------------------
-    
-   
+  
     def reset(self, *args, **kwargs):
         """
         Reset all notes off and programs on al channels
         from MidiManager object
         """
 
-        if self._synth_obj:
-            self._synth_obj.system_reset()
-            self._notify("reset ")
+        if self._synth_obj is None: return
+        self._synth_obj.reset()
+        self._chan =0
+        self._prog =0
+        self._notify("reset All Notes Off and Programs on all channels")
 
     #------------------------------------------------------------------------------
    
@@ -925,17 +939,17 @@ class MidiManager(object):
 
     #-----------------------------------------
 
-    def demo(self, _prog=16, chan=1, *args, **kwargs):
+    def demo(self, prog=16, chan=1, *args, **kwargs):
         """
         Test the app
         from MidiManager object
         """
        
-        self.prog(_prog=_prog, chan=chan)
+        self.program_change(chan, prog)
         for key in [60, 64, 67]:
             self.note(key=key, chan=chan)
         self.note(key=72,  dur=4, chan=chan)
-        self._notify(f"demo, prog: {_prog}, chan: {chan}")
+        self._notify(f"demo, prog: {prog}, chan: {chan}")
 
     #-----------------------------------------
 

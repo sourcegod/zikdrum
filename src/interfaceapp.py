@@ -103,25 +103,25 @@ class InterfaceApp(object):
 
     #------------------------------------------------------------------------------
 
-    def prog(self, _prog=0, chan=0, *args, **kwargs):
+    def program_change(self, prog=0, chan=0, *args, **kwargs):
         """
         Send program change
         from InterfaceApp object
         """
 
         try:
-            _prog = int(_prog)
+            prog = int(prog)
             chan = int(chan)
         except ValueError:
-            _prog =0
+            prog =0
             chan =0
 
        
         self.msg_app = ""
         
         if self.midi_man and self.midi_man.is_active():
-            self.midi_man.prog(_prog, chan)
-            self.msg_app = f"Program Change, prog: {_prog}, chan: {chan}"
+            self.midi_man.program_change(chan, prog)
+            self.msg_app = f"Program Change, prog: {prog}, chan: {chan}"
         else:
             self.msg_app = "No Synth Engine is available."
 
@@ -717,6 +717,22 @@ class InterfaceApp(object):
             self.player.midi_man.panic()
             self.msg_app = "Panic"
             self.notify(self.msg_app)
+    
+    #-------------------------------------------
+
+    def reset(self, *args, **kwargs):
+        """
+        Reset the Synths
+        from Interface App object
+        """
+
+        if self.midi_man and self.midi_man.is_active():
+            self.midi_man.reset()
+            self.msg_app = "Reset..."
+        else:
+            self.msg_app = "No Synth Engine is available."
+
+        self.notify(self.msg_app)
     
     #-------------------------------------------
 
