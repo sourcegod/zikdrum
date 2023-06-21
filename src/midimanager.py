@@ -403,6 +403,8 @@ class MidiManager(object):
         self._outport_num =0
         self._outport_name = ""
         self._audio_out = "hw:0"
+        self._bpm =100
+        self._tempo = 60 / self._bpm # time in sec
 
     #-----------------------------------------
 
@@ -451,6 +453,18 @@ class MidiManager(object):
 
         self._midi_in = None
         self._midi_out = None
+
+    #-----------------------------------------
+
+    
+    def _notify(self, msg):
+        """
+        Notify message to the parent object
+        from MidiManager object
+        """
+
+        if self.parent:
+            self.parent.notify(msg)
 
     #-----------------------------------------
 
@@ -635,6 +649,17 @@ class MidiManager(object):
 
     #-----------------------------------------
 
+    def is_active(self):
+        """
+        returns whether synth is active
+        from MidiFluid object
+        """
+
+        return self._synth_obj and self._synth_obj.is_active()
+
+    #-----------------------------------------
+
+
     def send_msg(self, msg):
         """
         Sending midi messages with test
@@ -789,6 +814,128 @@ class MidiManager(object):
         synth_obj.note_off(0, 76)
 
         time.sleep(1.0)
+
+    #-----------------------------------------
+
+
+    def prog(self, _prog=0, chan=1, *args, **kwargs):
+        """
+        set program change
+        from MidiManager object
+        """
+
+        chan = int(chan)
+        _prog = int(_prog)
+        if self._synth_obj:
+            self._synth_obj.program_change(chan, _prog)
+            self._chan = chan
+            self._notify(f"prog: {_prog}, chan: {chan}")
+
+    #------------------------------------------------------------------------------
+ 
+
+    def note_on(self, key=60, vel=100, chan=1, *args, **kwargs):
+        """
+        set note on 
+        from MidiManager object
+        """
+
+        chan = int(chan)
+        key = int(key)
+        vel = int(vel)
+
+        if self._synth_obj:
+            self._synth_obj.note_on(chan, key, vel)
+            self._notify(f"noteon, key: {key}, vel: {vel}, chan: {chan}")
+
+    #-----------------------------------------
+
+    def note_off(self, key=60, chan=1, *args, **kwargs):
+        """
+        set note off
+        from MidiManager object
+        """
+
+        chan = int(chan)
+        key = int(key)
+
+        if self._synth_obj:
+            self._synth_obj.note_off(chan, key)
+            self._notify(f"noteoff, key: {key}, chan: {chan}")
+
+    #-----------------------------------------
+    
+    def note(self, key=60, vel=100, dur=1, chan=1, *args, **kwargs):
+        """
+        set note with duration
+        from MidiManager object
+        """
+        # print("key: ", repr(key))
+        dur = float(dur)
+        if self._synth_obj:
+            self.note_on(key, vel, chan)
+            time.sleep(self._tempo * dur)
+            self.note_off(key, chan)
+            self._notify(f"note, key: {key}, vel: {vel}, dur: {dur}, chan: {chan}")
+
+    #-----------------------------------------
+
+
+    def cc(self, ctrl=7, val=100, chan=1, *args, **kwargs):
+        """
+        set note control change
+        from MidiManager object
+        """
+        
+        chan = int(chan)
+        ctrl = int(ctrl)
+        val = int(val)
+
+        if self._synth_obj:
+            self._synth_obj.control_change(chan, ctrl, val)
+            self._notify(f"cc, ctrl: {ctrl}, val: {val}, chan: {chan}")
+
+    #-----------------------------------------
+    
+   
+    def reset(self, *args, **kwargs):
+        """
+        Reset all notes off and programs on al channels
+        from MidiManager object
+        """
+
+        if self._synth_obj:
+            self._synth_obj.system_reset()
+            self._notify("reset ")
+
+    #------------------------------------------------------------------------------
+   
+    def bpm(self, _bpm=100, *args, **kwargs):
+        """
+        set the bpm
+        from MidiManager object
+        """
+        
+        _bpm = float(_bpm)
+        if self._synth_obj:
+            if _bpm >0: # to avoid ZeroDivisionError :-)
+                self._tempo = 60 / _bpm
+                self._bpm = _bpm
+            self._notify("bpm, bpm: {_bpm}")
+
+    #-----------------------------------------
+
+    def demo(self, _prog=16, chan=1, *args, **kwargs):
+        """
+        Test the app
+        from MidiManager object
+        """
+       
+        self.prog(_prog=_prog, chan=chan)
+        for key in [60, 64, 67]:
+            self.note(key=key, chan=chan)
+        self.note(key=72,  dur=4, chan=chan)
+        self._notify(f"demo, prog: {_prog}, chan: {chan}")
 
     #-----------------------------------------
 

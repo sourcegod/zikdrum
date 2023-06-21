@@ -103,6 +103,99 @@ class InterfaceApp(object):
 
     #------------------------------------------------------------------------------
 
+    def prog(self, _prog=0, chan=0, *args, **kwargs):
+        """
+        Send program change
+        from InterfaceApp object
+        """
+
+        try:
+            _prog = int(_prog)
+            chan = int(chan)
+        except ValueError:
+            _prog =0
+            chan =0
+
+       
+        self.msg_app = ""
+        
+        if self.midi_man and self.midi_man.is_active():
+            self.midi_man.prog(_prog, chan)
+            self.msg_app = f"Program Change, prog: {_prog}, chan: {chan}"
+        else:
+            self.msg_app = "No Synth Engine is available."
+
+        self.notify(self.msg_app)
+
+    #------------------------------------------------------------------------------
+
+
+    def note(self, key=69, vel=100, dur=4, chan=0, *args, **kwargs):
+        """
+        play one note to the synth engine
+        from InterfaceApp object
+        """
+
+        try:
+            key = int(key)
+            vel = int(vel)
+            dur = float(dur)
+            chan = int(chan)
+        except ValueError:
+            key =69
+            vel =100
+            dur = 4
+            chan =0
+
+       
+        self.msg_app = ""
+        
+        if self.midi_man and self.midi_man.is_active():
+            self.midi_man.note(key, vel, dur, chan) # play one note
+            self.msg_app = "Note"
+        else:
+            self.msg_app = "No Synth Engine is available."
+
+        self.notify(self.msg_app)
+
+    #------------------------------------------------------------------------------
+
+
+    def demo(self, prog=None, chan=None, *args, **kwargs):
+        """
+        play notes to the synth engine
+        from InterfaceApp object
+        """
+
+        if prog is None: 
+            prog =16
+        else:
+            try:
+                prog = int(prog)
+            except ValueError:
+                prog =16
+        if chan is None: 
+            chan =0
+        else:
+            try:
+                chan = int(chan)
+            except ValueError:
+                chan =0
+        
+        self.msg_app = ""
+        
+        if self.midi_man and self.midi_man.is_active():
+            self.midi_man.demo(prog, chan) # demo test for the synth
+            self.msg_app = "Test Synth Engine"
+        else:
+            self.msg_app = "No Synth Engine is available."
+
+        self.notify(self.msg_app)
+
+    #------------------------------------------------------------------------------
+
+
+
     def test_synth_engine(self, *args, **kwargs):
         """
         play notes to the synth engine
@@ -112,7 +205,7 @@ class InterfaceApp(object):
         self.msg_app = ""
         
         # """
-        if self.midi_man and self.midi_man._synth_obj:
+        if self.midi_man and self.midi_man.is_active():
             self.midi_man.play_notes() # demo test for the synth
             self.msg_app = "Test Synth Engine"
         else:

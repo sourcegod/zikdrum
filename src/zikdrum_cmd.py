@@ -64,13 +64,16 @@ class CommandApp(object):
         
         # global dict
         self._global_dic = {
-                ("demo", "test"): self.iap.test_synth_engine,
+                ("prog"): self.iap.prog,
+                ("note"): self.iap.note,
+                ("test"): self.iap.test_synth_engine,
+                ("demo"): self.iap.demo,
                 (".", "panic"): self.iap.panic,
         }
         
         # info dictt
         self._info_dic = {
-                ("info", ): self.iap.print_info,
+                ("pr", "info", ): self.iap.print_info,
                 ("u", "sta", "status"): self.iap.print_status,
                 ("midp", "midiport"): self.iap.print_midi_ports,
                 ("midin", "midiin"): self.iap.change_midi_in,
