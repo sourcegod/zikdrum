@@ -1101,7 +1101,7 @@ class MidiBase(object):
 
     def update_tempo_params(self):
         """
-        update the tempo parameters
+        Updating the tempo parameters to change the bpm
         from MidiBase object
         """
         
@@ -1140,7 +1140,7 @@ class MidiMetronome(object):
     def set_tempo(self, tempo):
         """
         set the tempo
-        from MidiSequence object
+        from MidiMetronome object
         """
 
         self.tempo = tempo
@@ -2578,12 +2578,12 @@ class MidiSequence(object):
         """
 
         track = self.get_track(tracknum)
-        if track is None:
-            return
+        if track is None: return
         type = "set_tempo"
         ev = track.search_ev(type, time)
         if ev:
             ev.msg.tempo = int(val)
+            pass
         else:
             # debug("event tempo not found")
             ev = MidiEvent(type=type, cat=1)
@@ -2711,10 +2711,11 @@ class MidiSequence(object):
                     else:
                         evt = MidiEvent()
                         evt.msg = msg
-                    # print("voici tempo: ",msg.tempo)
-                    self.base.tempo = msg.tempo
+                    if msg.time == 0:
+                        self.base.tempo = msg.tempo
+                    # print(f"voici tempo: {msg.tempo}, time: {msg.time}")
                     # print("ticks_per_beat or ppq: {}".format(self.ppq))
-                    # print("Tempo: {}".format(msg.tempo))
+                    # print(f"track: {tracknum}, Tempo: {msg.tempo}")
                 elif msg.type == 'track_name':
                     evt = MidiEvent()
                     evt.msg = msg
@@ -2733,8 +2734,9 @@ class MidiSequence(object):
                     else:
                         evt = MidiEvent()
                         evt.msg = msg
-                    self.numerator = msg.numerator
-                    self.denominator = msg.denominator
+                    if msg.time == 0:
+                        self.numerator = msg.numerator
+                        self.denominator = msg.denominator
                     # print(msg)
                 elif msg.type in ('sequence_number', 'text', 'copyright', 'lyrics', 'key_signature',\
                     'marker', 'cue_marker', 'midi_port', 'smpte_offset', 'end_of_track'):
@@ -2813,7 +2815,7 @@ class MidiSequence(object):
             bpm = self.base.tempo2bpm(self.base.tempo)
             self.click_track = self.metronome.init_click(bpm)
             # self.set_bpm(bpm)
-            # self.update_tempo_params()
+            # self.base.update_tempo_params()
             # self.gen_tempo_track()
             # dont loop
             self.set_looping(0)
@@ -2966,6 +2968,7 @@ class MidiSequence(object):
             self.base.bpm = bpm
            
             if res > 0:
+                print("je passe ici")
                 # changing tempo track
                 tracknum =0
                 timepos =0
@@ -3047,6 +3050,13 @@ class MidiSequence(object):
         for (tracknum, track) in enumerate(self.track_lst):
             ev_lst = track.search_ev_group(curtick)
             for ev in ev_lst:
+                if ev.msg.type == "set_tempo":
+                    new_tempo = ev.msg.tempo
+                    if self.base.tempo != new_tempo:
+                        if ev.msg.time == 0:
+                            self.base.tempo = new_tempo
+                        # self.base.update_tempo_params()
+                        print(f"Type Set_tempo, tempo: {ev.msg.tempo}, abstick: {ev.msg.time}")
                 if ev.msg.type in self.base.playable_lst:
                     newev = MidiEvent()
                     newev.msg = ev.msg.copy()
@@ -3188,15 +3198,14 @@ class SystemScheduler(object):
 
         while 1:
             # debug("")
-            if not self._thread_running:
-                break
-           
+            if not self._thread_running: break
             if not self._player.is_playing() and not self._player.is_paused():
                 if finishing:
                     self._thread_running =0
                     break
 
-            # get timing in msec                    
+            # get timing in msec
+            ### Note: its depend for tick2sec function, sec_per_tick, sec_per_beat, and tempo variable
             self.curtime = self.get_relclock() # (time.time() - self.start_time) + self.last_time
             self.playpos = self._base.sec2tick(self.curtime)
             seq_pos = self._seq.get_position()
