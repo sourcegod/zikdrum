@@ -1646,6 +1646,7 @@ class MidiSequence(object):
         self._length =0
         self.clipboard = []
         self.group_ev = None
+        self.old_tempo =120
 
     #-----------------------------------------
 
@@ -3053,11 +3054,23 @@ class MidiSequence(object):
                 if ev.msg.type == "set_tempo":
                     new_tempo = ev.msg.tempo
                     if self.base.tempo != new_tempo:
+                        self.old_tempo = new_tempo
                         if ev.msg.time == 0:
                             self.base.tempo = new_tempo
                         # self.base.update_tempo_params()
-                        print(f"Type Set_tempo, tempo: {ev.msg.tempo}, abstick: {ev.msg.time}")
+                        msec = self.base.tick2sec(ev.msg.time)
+                        bpm = self.base.tempo2bpm(ev.msg.tempo)
+                        # print(f"Type Set_tempo, tempo: {ev.msg.tempo}, bpm: {bpm:.3f}, msec: {msec:.3f}")
                 if ev.msg.type in self.base.playable_lst:
+                    
+                    # """
+                    # not work
+                    if self.base.tempo != self.old_tempo:
+                        # self.base.tempo = self.old_tempo
+                        # self.base.update_tempo_params()
+                        pass
+                    # """
+
                     newev = MidiEvent()
                     newev.msg = ev.msg.copy()
                     newev.tracknum = tracknum
@@ -3243,6 +3256,8 @@ class SystemScheduler(object):
                     finishing =1
                     # msg_lst can be saved
                     if not self.msg_lst:
+                        self.playpos = self._base.sec2tick(self.curtime)
+                        # self._base.update_tempo_params()
                         self.msg_lst = self._seq.get_midi_data(self.playpos)
                         # debug("voici playpos: {}".format(self.playpos))
                         if self.msg_lst:
@@ -3264,13 +3279,15 @@ class SystemScheduler(object):
               
                 # msg part
                 if msg_ev:
-                    # if self.curtime >= msg_ev.msg.time:
+                    """
+                    if self.curtime >= msg_ev.msg.time:
                     # waiting time
-                    while self.curtime < msg_ev.msg.time:
+                    # while self.curtime < msg_ev.msg.time:
                         time.sleep(0.001)
                         msg_timing =1
                         # there is an ev in the list, cause not yet poped
                         msg_pending =1
+                    """
 
                     # send ev
                     tracknum = msg_ev.tracknum
@@ -3489,20 +3506,24 @@ class MidiPlayer(object):
         from MidiPlayer object
         """
 
-        if self.curseq is None:
-            return 0
+        if self.curseq is None: return 0
         clicked =0
         if self.is_clicking():
             clicked =1
             self.stop_click()
 
+        
+       
         self.curseq.set_bpm(bpm)
+        # Sets the Sequencer to the current position
+        self.set_position(-1)
+
         if clicked:
             self.start_click()
-    
+        
     #-----------------------------------------
 
-    def update_bpm(self, bpm):
+    def update_bpm0(self, bpm):
         """
         update the bpm (beat per minute) without changing tempo track
         from MidiPlayer object
@@ -3602,26 +3623,28 @@ class MidiPlayer(object):
         from MidiPlayer object
         """
         
-        if self.curseq is None:
-            return 0
+        if self.curseq is None: return 0
         return self.curseq.get_position()
 
     #-----------------------------------------
 
     def set_position(self, pos):
         """
-        set player position
+        Toggle Engine State whether playing,
+        and set player position
         from MidiPlayer object
         """
 
-        state = self._playing
         if self.curseq is None: return
+        state = self._playing
+        # state =0
+        if pos == -1: pos = self.get_position()
         if state:
+            self._playing =0
             self.stop_engine()
             self.midi_man.panic()
         
         self.init_pos()
-        self.init_click()
         self.curseq.set_position(pos)
         
         if state:
@@ -3636,8 +3659,7 @@ class MidiPlayer(object):
         from MidiPlayer
         """
         
-        if self.curseq is None:
-            return 0
+        if self.curseq is None: return 0
         # position in trackline is in time
         # debug("voici len player : {} ".format(val))
         return self.curseq.get_length()
@@ -3651,8 +3673,7 @@ class MidiPlayer(object):
         from MidiPlayer object
         """
 
-        if self.curseq is None:
-            return
+        if self.curseq is None: return
         self.playpos = pos
         self.curseq.curpos = pos
     

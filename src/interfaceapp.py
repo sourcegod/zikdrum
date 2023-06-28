@@ -791,7 +791,7 @@ class InterfaceApp(object):
                 bpm = float(bpm)
             except ValueError:
                 return
-            self.curseq.set_bpm(bpm)
+            self.player.change_bpm(bpm)
             self.msg_app = f"Change Bpm: {bpm:.2f}"
         self.notify(self.msg_app)
 
