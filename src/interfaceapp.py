@@ -336,7 +336,28 @@ class InterfaceApp(object):
         self.notify(self.msg_app)
 
     #------------------------------------------------------------------------------
+    
+    def get_position(self, num=None, *args, **kwargs):
+        """
+        Get or goto tick position
+        from Interface App object
+        """
         
+        if num is None:
+            pos = self.player.get_position()
+        else:
+            try:
+                num = int(num)
+            except ValueError:
+                pos =0
+            
+            pos = self.player.set_position(num)
+        
+        self.msg_app = f"Tick At: {pos}"
+        self.notify(self.msg_app)
+
+    #------------------------------------------------------------------------------
+     
     def rewind(self, step=1, *args, **kwargs):
         """
         rewind to previous bar

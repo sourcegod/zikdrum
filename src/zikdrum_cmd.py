@@ -82,6 +82,7 @@ class CommandApp(object):
                 ("synth", ): self.iap.change_synth,
                 ("bar", ): self.iap.get_bar,
                 ("bpm", ): self.iap.change_bpm,
+                ("pos", "tic"): self.iap.get_position,
         }
 
         # file dict

@@ -1109,7 +1109,7 @@ class MidiBase(object):
         # self.denominator =4 # time signature
         # self.ppq = 120 # pulse per quarter, tick per beat
         self.bar = self.numerator * self.ppq # in ticks
-        self.nb_beats = self.ppq * self.numerator # in ticks
+        # self.nb_beats = self.ppq * self.numerator # in ticks
         self.sec_per_beat = self.tempo / self.micro_sec # 
         self.sec_per_tick = float(self.sec_per_beat) / float(self.ppq)
         # debug(self.tempo)
@@ -1621,8 +1621,9 @@ class MidiSequence(object):
     """
     sequence manager
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, parent=None, *args, **kwargs):
         # super().__init__()
+        self.parent = parent
         self.base = MidiBase() # base midi object
         self.tools = midto.MidiTools()
         self.metronome = MidiMetronome(self) #
@@ -1741,11 +1742,19 @@ class MidiSequence(object):
         from MidiSequence object
         """
 
+        if self.parent is None: return
+        state = self.parent._playing
+        if state:
+            self.parent.stop_engine()
+        
+        if pos == -1: pos = self.curpos
         seq_len = self.get_length()
         pos = limit_value(pos, 0, seq_len)
         self.update_tracks_position(pos) 
         self.curpos = pos
-          
+        if state:
+            self.parent.start_engine()
+           
     #-----------------------------------------
 
     def get_length(self):
@@ -3066,8 +3075,9 @@ class MidiSequence(object):
                     # """
                     # not work
                     if self.base.tempo != self.old_tempo:
-                        # self.base.tempo = self.old_tempo
+                        self.base.tempo = self.old_tempo
                         # self.base.update_tempo_params()
+                        # self.set_position(-1)
                         pass
                     # """
 
@@ -3476,7 +3486,7 @@ class MidiPlayer(object):
         """
 
         self.midi_man = midi_driver
-        self.curseq = MidiSequence()
+        self.curseq = MidiSequence(self)
         if self.curseq:
             self.click_track = self.curseq.gen_default_data()
             self.curseq.init_sequencer(self.midi_man)
@@ -3525,6 +3535,7 @@ class MidiPlayer(object):
 
     def update_bpm0(self, bpm):
         """
+        Deprecated function
         update the bpm (beat per minute) without changing tempo track
         from MidiPlayer object
         """
@@ -3635,7 +3646,7 @@ class MidiPlayer(object):
         from MidiPlayer object
         """
 
-        if self.curseq is None: return
+        if self.curseq is None: return 0
         state = self._playing
         # state =0
         if pos == -1: pos = self.get_position()
@@ -3650,7 +3661,8 @@ class MidiPlayer(object):
         if state:
             self._playing =1
             self.start_engine()
-            
+        
+        return pos
     #-----------------------------------------
 
     def get_length(self):
