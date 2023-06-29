@@ -173,10 +173,12 @@ class CommandApp(object):
         for dic in self._com_lst:
             for keys in dic.keys():
                 # keys are tuple
-                if funcName in keys:
-                    cmdFunc = dic[keys]
-                    # print("cmdFunc found: ", cmdFunc.__name__)
-                    return cmdFunc
+                # searching for strict comparison
+                for item in keys:
+                    if funcName == item:
+                        cmdFunc = dic[keys]
+                        # print("cmdFunc found: ", cmdFunc.__name__)
+                        return cmdFunc
 
         return cmdFunc
 

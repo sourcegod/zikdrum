@@ -1057,7 +1057,7 @@ class MidiBase(object):
         """
 
         # debug("sec_per_tick: {}".format(self.sec_per_tick))
-        return nb_tick * self.sec_per_tick
+        return float(nb_tick * self.sec_per_tick)
 
     #-----------------------------------------
 

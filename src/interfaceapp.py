@@ -634,13 +634,18 @@ class InterfaceApp(object):
 
     #-------------------------------------------
 
-    def print_info(self, *args, **kwargs):
+    def print_info(self, param1=None, *args, **kwargs):
         """
         display midi file information
         from Interface App object
         """
 
-        self.msg_app = self.curseq.get_properties()
+        if param1 is None:
+            self.msg_app = self.curseq.get_properties()
+        elif param1 == "bpm":
+            bpm = self.curseq.get_bpm()
+            self.msg_app = f"Bpm: {bpm:.2f}"
+
         self.notify(self.msg_app)
     
     #-------------------------------------------
