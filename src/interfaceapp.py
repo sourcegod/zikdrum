@@ -337,9 +337,9 @@ class InterfaceApp(object):
 
     #------------------------------------------------------------------------------
     
-    def get_position(self, num=None, *args, **kwargs):
+    def set_position(self, num=None, *args, **kwargs):
         """
-        Get or goto tick position
+        Gets, sets, or goto tick position
         from Interface App object
         """
         

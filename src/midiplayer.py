@@ -1745,7 +1745,8 @@ class MidiSequence(object):
         if self.parent is None: return
         state = self.parent._playing
         if state:
-            self.parent.stop_engine()
+            # self.parent.stop_engine()
+            pass
         
         if pos == -1: pos = self.curpos
         seq_len = self.get_length()
@@ -1753,7 +1754,8 @@ class MidiSequence(object):
         self.update_tracks_position(pos) 
         self.curpos = pos
         if state:
-            self.parent.start_engine()
+            # self.parent.start_engine()
+            pass
            
     #-----------------------------------------
 
@@ -3139,6 +3141,8 @@ class SystemScheduler(object):
         self._thread_running =0
         self.click_recording =0
         self.click_playing =0
+        self.last_time =0
+        self.start_time =0
 
     #-------------------------------------------
 
@@ -3177,6 +3181,16 @@ class SystemScheduler(object):
 
     #-----------------------------------------
 
+    def is_running(self):
+        """
+        whether the Midi Engine is running
+        from SystemScheduler object
+        """
+
+        return self._thread_running
+
+    #-----------------------------------------
+
     def init_clock(self):
         """
         returns absolute time
@@ -3186,6 +3200,20 @@ class SystemScheduler(object):
         return time.time()
 
     #-----------------------------------------
+    
+    def reset_clock(self):
+        """
+        resetting time parameters
+        from SystemScheduler object
+        """
+        # scheduling time
+        curpos = self._seq.get_position()
+        self.last_time = self._base.tick2sec(curpos)
+        seq_len = self._seq.get_length()
+        self.start_time = self.init_clock()
+
+    #-----------------------------------------
+
 
     def get_relclock(self):
         """
@@ -3197,8 +3225,9 @@ class SystemScheduler(object):
 
     #-----------------------------------------
 
-    def poll_out(self):
+    def poll_out0(self):
         """
+        Deprecated Function
         polling out midi data
         from SystemScheduler object
         """
@@ -3230,9 +3259,11 @@ class SystemScheduler(object):
             # get timing in msec
             ### Note: its depend for tick2sec function, sec_per_tick, sec_per_beat, and tempo variable
             self.curtime = self.get_relclock() # (time.time() - self.start_time) + self.last_time
-            self.playpos = self._base.sec2tick(self.curtime)
-            seq_pos = self._seq.get_position()
-            seq_len = self._seq.get_length()
+            # Values in tick
+            self.playpos = self._base.sec2tick(self.curtime) # in tick
+            seq_pos = self._seq.get_position() # in tick
+            seq_len = self._seq.get_length() # in tick
+            # print(f"curtime: {self.curtime:.3f}, curtick: {self.playpos}, seq_pos: {seq_pos}")
             if not self._player.is_playing():
                 finishing =1
             else: # playing
@@ -3375,7 +3406,42 @@ class SystemScheduler(object):
                         click_pending =1
 
     #-----------------------------------------
+    
+    def poll_out(self):
+        """
+        polling out midi data
+        from SystemScheduler object
+        """
+
+        """
+        # Todo: dont init click_lst
+        msg_ev = None
+        msg_timing =0
+        msg_pending =0
+        finishing =0
+        click_lst = []
+        click_ev = None
+        click_pending =0
+        click_timing =0
+        """
+
+        # scheduling time
+        curpos = self._seq.get_position()
+        self.last_time = self._base.tick2sec(curpos)
+        seq_len = self._seq.get_length()
+        self.start_time = self.init_clock()
+        
+
+        midi_callback = self._player._midi_callback
+        while self._thread_running:
+            # debug("")
+            midi_callback()
+            # pauses the system, necessary to change position
+            time.sleep(0.1)
+    
+    #-----------------------------------------
    
+ 
     def start_play_thread(self):
         """
         start sending  midi data thread
@@ -3383,14 +3449,15 @@ class SystemScheduler(object):
         """
 
         if self._thread_running:
-            self.stop_play_thread()
-            # self.init_click()
+            # self.stop_play_thread()
+            return
         if self._play_thread is None:
             self._thread_running =1
             self._playing =1
             self._play_thread = threading.Thread(target=self.poll_out, args=())
             self._play_thread.daemon = True
             self._play_thread.start()
+            debug("Je passe en start_play_thread")
 
     #-----------------------------------------
 
@@ -3404,6 +3471,7 @@ class SystemScheduler(object):
         self._playing =0
         self._play_thread = None
         time.sleep(0.1)
+        
 
     #-----------------------------------------
 
@@ -3560,7 +3628,8 @@ class MidiPlayer(object):
         if not self._playing:
             self._playing =1
             self._paused =0
-            self.start_engine()
+            if not self.midi_sched.is_running():
+                self.start_engine()
 
     #-----------------------------------------
     
@@ -3575,7 +3644,7 @@ class MidiPlayer(object):
         self._paused =1
         if self._recording:
             self.stop_record()
-        self.stop_engine()
+        # self.stop_engine()
         self.midi_man.panic()
         self.init_click()
         # check whether recording data is waiting before generate the track line
@@ -3648,11 +3717,10 @@ class MidiPlayer(object):
 
         if self.curseq is None: return 0
         state = self._playing
-        # state =0
         if pos == -1: pos = self.get_position()
         if state:
             self._playing =0
-            self.stop_engine()
+            # self.stop_engine()
             self.midi_man.panic()
         
         self.init_pos()
@@ -3660,7 +3728,8 @@ class MidiPlayer(object):
         
         if state:
             self._playing =1
-            self.start_engine()
+            # self.start_engine()
+            # time.sleep(2)
         
         return pos
     #-----------------------------------------
@@ -4063,6 +4132,204 @@ class MidiPlayer(object):
 
     #-----------------------------------------
 
+    def reset_clock(self):
+        """
+        resetting time parameters
+        from MidiPlayer object
+        """
+        # scheduling time
+        curpos = self.get_position()
+        self.last_time = self.curseq.base.tick2sec(curpos)
+        seq_len = self.curseq.get_length()
+        self.start_time = time.time()
+
+    #-----------------------------------------
+
+    def _midi_callback(self):
+        """
+        polling out midi data
+        from MidiPlayer object
+        """
+
+        # if self._playing:
+        # Todo: dont init click_lst
+        msg_ev = None
+        msg_timing =0
+        msg_pending =0
+        finishing =0
+        click_lst = []
+        click_ev = None
+        click_pending =0
+        click_timing =0
+        if self._playing:
+            # self.reset_clock()
+            # scheduling time
+            pass
+
+            curpos = self.get_position()
+            last_time = self.curseq.base.tick2sec(curpos)
+            seq_len = self.curseq.get_length()
+            start_time = time.time() # self.init_clock()
+        # debug("")
+        while self._playing:
+            # debug("In Loop")
+            if not self._playing and not self._paused:
+                if finishing:
+                    break
+
+            # get timing in msec
+            ### Note: its depend for tick2sec function, sec_per_tick, sec_per_beat, and tempo variable
+            curtime = (time.time() - start_time) + last_time
+            # Values in tick
+            self.playpos = self.curseq.base.sec2tick(curtime) # in tick
+            seq_pos = self.get_position() # in tick
+            seq_len = self.get_length() # in tick
+            # print(f"curtime: {self.curtime:.3f}, curtick: {self.playpos}, seq_pos: {seq_pos}")
+            if not self._playing:
+                finishing =1
+            else: # playing
+                finishing =0
+                if self._recording:
+                    self.set_play_pos(self.playpos)
+                else: # not recording
+                    if self.curseq.looping:
+                        if seq_len >0:
+                            self.set_play_pos(self.playpos)
+                    else: # not looping
+                        if seq_pos < seq_len:
+                            self.set_play_pos(self.playpos)
+                 
+                # whether is looping
+                if self.curseq.loop_manager():
+                    start_time = time.time() # self.init_clock()
+                    # self._player.check_rec_data()
+                    msg_ev = None
+                    msg_timing =0
+                    msg_pending =0
+                    self.msg_lst = []
+                    # click part
+                    click_ev = None
+                    click_pending =0
+                    click_timing =0
+                    click_lst = []
+                
+                # msg part
+                if not msg_timing and not msg_pending:
+                    finishing =1
+                    # msg_lst can be saved
+                    if not self.msg_lst:
+                        self.playpos = self.curseq.base.sec2tick(curtime)
+                        # self._base.update_tempo_params()
+                        self.msg_lst = self.curseq.get_midi_data(self.playpos)
+                        # debug("voici playpos: {}".format(self.playpos))
+                        if self.msg_lst:
+                            msg_pending =1
+                            finishing =0
+                    else: # msg_lst can be saved
+                        msg_pending =1
+                        finishing =0
+               
+                # msg part
+                # whether is msg_lst or ev is pending
+                if msg_ev is None and msg_pending and self.msg_lst:
+                    msg_ev = self.msg_lst[0]
+                    msg_timing =1
+                    # there is data in the list
+                    msg_pending =1
+                    # debug("count_msg: {}".format(count))
+                
+              
+                # msg part
+                if msg_ev:
+                    """
+                    if self.curtime >= msg_ev.msg.time:
+                    # waiting time
+                    # while self.curtime < msg_ev.msg.time:
+                        time.sleep(0.001)
+                        msg_timing =1
+                        # there is an ev in the list, cause not yet poped
+                        msg_pending =1
+                    """
+
+                    # send ev
+                    tracknum = msg_ev.tracknum
+                    track = self.curseq.get_track(tracknum)
+                   
+                    if not track.muted and not track.sysmuted:
+                        # Todo: changing channel and patch message dynamically or statically
+                        
+                        # """
+                        # dont modify drum track
+                        if tracknum != 0:
+                            # only for recording   ???
+                            # changing channel dynamically: during playback
+                            msg_ev.msg.channel = track.channel_num
+                            pass
+                        # """
+                        
+                        self.midi_man.output_message(msg_ev.msg)
+                    # delete msg in the buffer after sending
+                    try:
+                        self.msg_lst.pop(0)
+                    except IndexError:
+                        pass
+                    msg_ev = None
+                    msg_timing =0
+                    if not self.msg_lst:
+                        msg_pending =0                
+                
+                    """
+                    elif self.curtime < msg_ev.msg.time: 
+                        # debug("msg_lst len: {}".format(len(self.msg_lst)))
+                        msg_timing =1
+                        # there is an ev in the list, cause not yet poped
+                        msg_pending =1
+                    """
+
+            # click part
+            if not self.click_track.is_active():
+                finishing =1
+            else:
+                finishing =0
+                if not click_timing and not click_pending:
+                    if not click_lst:
+                        click_lst = self._seq.get_click_data()
+                        if click_lst:
+                            click_pending =1
+                    else: # there is ev in click_lst
+                        click_pending =1
+
+                # getting click_ev
+                if click_ev is None and click_pending and click_lst:
+                    click_ev = click_lst[0]
+                    click_timing =1
+                    click_pending =1
+                
+                if click_ev:
+                    if self.curtime >= click_ev.msg.time:
+                        # send ev
+                        track = self.curseq.get_track(0)
+                        if not track.muted and not track.sysmuted:
+                            # print("voici: ", click_ev.msg)
+                            self.midi_man.output_message(click_ev.msg)
+                        # delete msg in the buffer after sending
+                        try:
+                            click_lst.pop(0)
+                        except IndexError:
+                            pass
+                        click_ev = None
+                        click_timing =0
+                        if not click_lst:
+                            click_pending =0                
+                    elif self.curtime < click_evcurmsg.time: 
+                        click_timing =1
+                        # maybe there is an ev in the list, cause not yet poped
+                        click_pending =1
+            # time.sleep(0.001)
+
+    #-----------------------------------------
+   
+
     def start_engine(self):
         """
         start the midi engine
@@ -4070,6 +4337,7 @@ class MidiPlayer(object):
         """
 
         self.midi_sched.start_play_thread()
+        # self.midi_sched.reset_clock()
         self.init_click()
             
     #-----------------------------------------
@@ -4080,7 +4348,7 @@ class MidiPlayer(object):
         from MidiPlayer object
         """
 
-        self.midi_sched.stop_play_thread()
+        # self.midi_sched.stop_play_thread()
             
     #-----------------------------------------
 
@@ -4113,7 +4381,7 @@ class MidiPlayer(object):
             self.click_track.active =0
         else:
             self.click_track.active =0
-            self.stop_engine()
+            # self.stop_engine()
         
         self.init_click()
         self._clicking =0
@@ -4276,3 +4544,5 @@ class MidiPlayer(object):
 
 #========================================
 
+if __name__ == "__main__":
+    input("It's OK")

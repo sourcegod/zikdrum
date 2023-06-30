@@ -82,7 +82,6 @@ class CommandApp(object):
                 ("synth", ): self.iap.change_synth,
                 ("bar", ): self.iap.get_bar,
                 ("bpm", ): self.iap.change_bpm,
-                ("pos", "tic"): self.iap.get_position,
         }
 
         # file dict
@@ -95,6 +94,7 @@ class CommandApp(object):
         self._transport_dic = {
                 (" ", "pp", "play"): self.iap.play_pause,
                 ("st", "stop"): self.iap.stop,
+                ("go", "pos", "tic"): self.iap.set_position,
                 ("w", "rw", "rewind"): self.iap.rewind,
                 ("b", "fw", "forward"): self.iap.forward,
                 ("<", "gos", "gotostart"): self.iap.goto_start,
