@@ -58,6 +58,7 @@ class InterfaceApp(object):
         # self.midi_man.receive_from(port=1, callback=self.midi_man.input_callback)
         # Not receive messages temporary to test External Synth with Timidity ports.
         # self.midi_man.receive_from(port=1, callback=self.player.input_callback)
+        self.player.start_midi_engine()
         self.clip = midto.MidiClipboard(self.player)
         self.select = midto.MidiSelector(self.player)
         msg = "Init player"
@@ -1086,6 +1087,27 @@ class InterfaceApp(object):
             self.msg_app = f"Init Synth, type: {synth_type}, Midi Out Port: {outport_num}, Audio Output: {audio_out}"
         
         self.notify(self.msg_app)
+
+    #-------------------------------------------
+
+    def change_midi_engine(self, param=None, *args, **kwargs):
+        """
+        Change the midi engine
+        from Interfaceapp object
+        """
+        
+        if param == "on":
+            self.player.start_midi_engine()
+        elif param == "off":
+            self.player.stop_midi_engine()
+        
+        if self.player.is_running():
+            self.msg_app = f"Midi Engine is Running"
+        else:
+            self.msg_app = f"Midi Engine is Stopped"
+        
+        self.notify(self.msg_app)
+
 
     #-------------------------------------------
 

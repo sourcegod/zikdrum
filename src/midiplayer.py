@@ -1754,7 +1754,7 @@ class MidiSequence(object):
         self.update_tracks_position(pos) 
         self.curpos = pos
         if state:
-            # self.parent.start_engine()
+            # self.parent.start_midi_engine()
             pass
            
     #-----------------------------------------
@@ -3448,16 +3448,15 @@ class SystemScheduler(object):
         from SystemScheduler object
         """
 
-        if self._thread_running:
-            # self.stop_play_thread()
-            return
+        if self._thread_running: return
+        # self.stop_play_thread()
         if self._play_thread is None:
             self._thread_running =1
             self._playing =1
             self._play_thread = threading.Thread(target=self.poll_out, args=())
             self._play_thread.daemon = True
             self._play_thread.start()
-            debug("Je passe en start_play_thread")
+            # debug("Je passe en start_play_thread")
 
     #-----------------------------------------
 
@@ -3628,8 +3627,9 @@ class MidiPlayer(object):
         if not self._playing:
             self._playing =1
             self._paused =0
-            if not self.midi_sched.is_running():
-                self.start_engine()
+            if not self.is_running():
+                # self.start_midi_engine()
+                print(f"Midi Engine is not Running.")
 
     #-----------------------------------------
     
@@ -3644,7 +3644,7 @@ class MidiPlayer(object):
         self._paused =1
         if self._recording:
             self.stop_record()
-        # self.stop_engine()
+        # self.stop_midi_engine()
         self.midi_man.panic()
         self.init_click()
         # check whether recording data is waiting before generate the track line
@@ -3662,7 +3662,8 @@ class MidiPlayer(object):
 
         if self.curseq is None: return
         if self._playing or self._paused:
-            self.stop_engine()
+            # self.stop_midi_engine()
+            pass
         # self.init_params()
         if self._recording:
             self.stop_record()
@@ -4151,7 +4152,7 @@ class MidiPlayer(object):
         from MidiPlayer object
         """
 
-        # if self._playing:
+        if not (self._playing and self.is_running()): return
         # Todo: dont init click_lst
         msg_ev = None
         msg_timing =0
@@ -4161,17 +4162,14 @@ class MidiPlayer(object):
         click_ev = None
         click_pending =0
         click_timing =0
-        if self._playing:
-            # self.reset_clock()
-            # scheduling time
-            pass
 
-            curpos = self.get_position()
-            last_time = self.curseq.base.tick2sec(curpos)
-            seq_len = self.curseq.get_length()
-            start_time = time.time() # self.init_clock()
-        # debug("")
-        while self._playing:
+        curpos = self.get_position()
+        last_time = self.curseq.base.tick2sec(curpos)
+        seq_len = self.curseq.get_length()
+        start_time = time.time() # self.init_clock()
+
+        debug("")
+        while self._playing and self.is_running():
             # debug("In Loop")
             if not self._playing and not self._paused:
                 if finishing:
@@ -4330,7 +4328,7 @@ class MidiPlayer(object):
     #-----------------------------------------
    
 
-    def start_engine(self):
+    def start_midi_engine(self):
         """
         start the midi engine
         from MidiPlayer object
@@ -4342,15 +4340,26 @@ class MidiPlayer(object):
             
     #-----------------------------------------
 
-    def stop_engine(self):
+    def stop_midi_engine(self):
         """
         stop the midi engine
         from MidiPlayer object
         """
 
-        # self.midi_sched.stop_play_thread()
+        self.midi_sched.stop_play_thread()
             
     #-----------------------------------------
+
+    def is_running(self):
+        """
+        Tests the Midi Engine
+        from MidiPlayer object
+        """
+
+        return self.midi_sched.is_running()
+            
+    #-----------------------------------------
+
 
     def start_click(self):
         """
@@ -4362,7 +4371,7 @@ class MidiPlayer(object):
             self.click_track.active =1
         else:
             self.click_track.active =1
-            self.start_engine()
+            # self.start_midi_engine()
         
         self.init_click()
         self._clicking =1

@@ -70,6 +70,7 @@ class CommandApp(object):
                 ("demo"): self.iap.demo,
                 (".", "panic"): self.iap.panic,
                 ("..", "reset"): self.iap.reset,
+                ("eng", "engine"): self.iap.change_midi_engine,
         }
         
         # info dictt
@@ -94,12 +95,13 @@ class CommandApp(object):
         self._transport_dic = {
                 (" ", "pp", "play"): self.iap.play_pause,
                 ("st", "stop"): self.iap.stop,
-                ("go", "pos", "tic"): self.iap.set_position,
                 ("w", "rw", "rewind"): self.iap.rewind,
                 ("b", "fw", "forward"): self.iap.forward,
                 ("<", "gos", "gotostart"): self.iap.goto_start,
                 (">", "goe", "gotoend"): self.iap.goto_end,
+                ("go", "pos"): self.iap.set_position,
                 ("gob", "gotobar"): self.iap.goto_bar,
+                ("goc", "tic", "gototic"): self.iap.set_position,
         }
 
         # dict list
