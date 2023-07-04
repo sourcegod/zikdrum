@@ -2,11 +2,13 @@
 """
     File: miditools.py
     Module for midi tools objects.
+    Last update: Tue, 04/07/2023
     Date: Mon, 04/07/2022
     Author: Coolbrother
 """
 import copy
 import midiplayer as midplay
+import midisequence as midseq
 
 def merge_dict(dic1, dic2):
     """
@@ -237,7 +239,7 @@ class MidiTools(Singleton):
         """
 
         if seq:
-            new_seq = midplay.MidiSequence()
+            new_seq = midseq.MidiSequence()
             new_seq.__dict__ = merge_dict(new_seq.__dict__, seq.__dict__)
             
             track_lst = seq.track_lst
@@ -471,7 +473,7 @@ class MidiTrackEdit(object):
     def shift_one_ev_to_left(self, ev_lst, ev_ind, step):
         """
         move just one event start of a track
-        from MidiSequence object
+        from MidiTrackEdit object
         """
 
         if ev_lst:
@@ -482,7 +484,7 @@ class MidiTrackEdit(object):
     def shift_one_ev_to_right(self, ev_lst, ev_ind, step):
         """
         move just one event to end of a track
-        from MidiSequence object
+        from MidiTrackEdit object
         """
 
         if ev_lst:
@@ -493,7 +495,7 @@ class MidiTrackEdit(object):
     def shift_evs_to_left(self, ev_lst, ev_ind, step):
         """
         move all evs ofset of a ev list from ev index ev_ind to left to step in time
-        from MidiSequence object
+        from MidiTrackEdit object
         """
 
         if ev_lst:
@@ -505,7 +507,7 @@ class MidiTrackEdit(object):
     def shift_evs_to_right(self, ev_lst, ev_ind, step):
         """
         move all evs ofset of a ev list from ev index ev_ind to right to step in time
-        from MidiSequence object
+        from MidiTrackEdit object
         """
 
         if ev_lst:
@@ -518,7 +520,7 @@ class MidiTrackEdit(object):
         """
         move all evs ofset of a track from ev index ev_ind to left to step in time
         We can pass any track, not only track in the track list of midi player
-        from MidiSequence object
+        from MidiTrackEdit object
         """
 
         if track:
@@ -532,7 +534,7 @@ class MidiTrackEdit(object):
         """
         move all evs ofset of a track from ev index ev_ind to right to step in time
         We can pass any track, not only track in the track list of midi player
-        from MidiSequence object
+        from MidiTrackEdit object
         """
 
         if track:
@@ -546,7 +548,7 @@ class MidiTrackEdit(object):
         """
         move the first ev to zero and move all next evs ofset belong the first ev in time
         We can pass any track, not only track in the track list of midi player
-        from MidiSequence object
+        from MidiTrackEdit object
         """
 
         if track:
@@ -630,7 +632,7 @@ class MidiTrackEdit(object):
         return: 
         ins_ind: the insert index point, 
         and ev_lst: the modified events
-        from MidiSequence object
+        from MidiTrackEdit object
         """
         
         ins_ind =-1 # for insert index
@@ -686,7 +688,7 @@ class MidiTrackEdit(object):
         return: 
         ins_ind: the insert index point, 
         and ev_lst: the modified events
-        from MidiSequence object
+        from MidiTrackEdit object
         """
         
         ins_ind =-1 # for insert index
@@ -732,7 +734,7 @@ class MidiTrackEdit(object):
     def replace_events_to_track(self, track_obj, curtrack, ins_pos, copy_mode=0):
         """
         replace eventss from clipboard to track, 
-        from MidiSequence object
+        from MidiTrackEdit object
         """
 
         new_evs = []
@@ -768,7 +770,7 @@ class MidiTrackEdit(object):
     def merge_events_to_track(self, track_obj, curtrack, ins_pos, copy_mode=0):
         """
         merge eventss from clipboard to track, 
-        from MidiSequence object
+        from MidiTrackEdit object
         """
 
         new_evs = []
@@ -1203,4 +1205,7 @@ class MidiClipboard(object):
 
 #========================================
 
-
+if __name__ == "__main__":
+    tol = MidiTools()
+    input("It's OK")
+#-----------------------------------------
