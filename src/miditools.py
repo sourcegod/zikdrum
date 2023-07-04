@@ -194,7 +194,7 @@ class MidiTools(Singleton):
         
         new_evs = []
         for ev in ev_lst:
-            evt = midplay.MidiEvent()
+            evt = midseq.MidiEvent()
             evt.__dict__ = merge_dict(evt.__dict__, ev.__dict__)
             evt.msg = ev.msg.copy()
             
@@ -217,7 +217,7 @@ class MidiTools(Singleton):
         
         new_tracks = []
         for track in track_lst:
-            trk = midplay.MidiTrack()
+            trk = midseq.MidiTrack()
             trk.__dict__ = merge_dict(trk.__dict__, track.__dict__)
             # init track parts
             trk.ev_lst = []
