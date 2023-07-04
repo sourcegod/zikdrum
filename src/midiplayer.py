@@ -4133,7 +4133,7 @@ class MidiPlayer(object):
 
     #-----------------------------------------
 
-    def reset_clock(self):
+    def reset_time(self):
         """
         resetting time parameters
         from MidiPlayer object
@@ -4146,13 +4146,25 @@ class MidiPlayer(object):
 
     #-----------------------------------------
 
+    def get_reltime(self):
+        """
+        returns relatif timing since start_time
+        from MidiPlayer object
+        """
+
+        return (time.time() - self.start_time) + self.last_time
+
+    #-----------------------------------------
+
+
     def _midi_callback(self):
         """
         polling out midi data
         from MidiPlayer object
         """
 
-        if not (self._playing and self.is_running()): return
+        _is_running = self.midi_sched.is_running
+        if not (self._playing and _is_running()): return
         # Todo: dont init click_lst
         msg_ev = None
         msg_timing =0
@@ -4164,20 +4176,17 @@ class MidiPlayer(object):
         click_timing =0
 
         curpos = self.get_position()
-        last_time = self.curseq.base.tick2sec(curpos)
+        self.last_time = self.curseq.base.tick2sec(curpos)
         seq_len = self.curseq.get_length()
-        start_time = time.time() # self.init_clock()
+        # start_time = time.time() # self.init_clock()
+        self.start_time = time.time() # self.init_time()
 
         debug("")
-        while self._playing and self.is_running():
+        while self._playing and _is_running():
             # debug("In Loop")
-            if not self._playing and not self._paused:
-                if finishing:
-                    break
-
             # get timing in msec
             ### Note: its depend for tick2sec function, sec_per_tick, sec_per_beat, and tempo variable
-            curtime = (time.time() - start_time) + last_time
+            curtime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
             # Values in tick
             self.playpos = self.curseq.base.sec2tick(curtime) # in tick
             seq_pos = self.get_position() # in tick
@@ -4239,31 +4248,17 @@ class MidiPlayer(object):
               
                 # msg part
                 if msg_ev:
-                    """
-                    if self.curtime >= msg_ev.msg.time:
-                    # waiting time
-                    # while self.curtime < msg_ev.msg.time:
-                        time.sleep(0.001)
-                        msg_timing =1
-                        # there is an ev in the list, cause not yet poped
-                        msg_pending =1
-                    """
-
                     # send ev
                     tracknum = msg_ev.tracknum
                     track = self.curseq.get_track(tracknum)
-                   
                     if not track.muted and not track.sysmuted:
                         # Todo: changing channel and patch message dynamically or statically
                         
-                        # """
                         # dont modify drum track
                         if tracknum != 0:
                             # only for recording   ???
                             # changing channel dynamically: during playback
                             msg_ev.msg.channel = track.channel_num
-                            pass
-                        # """
                         
                         self.midi_man.output_message(msg_ev.msg)
                     # delete msg in the buffer after sending
@@ -4276,14 +4271,6 @@ class MidiPlayer(object):
                     if not self.msg_lst:
                         msg_pending =0                
                 
-                    """
-                    elif self.curtime < msg_ev.msg.time: 
-                        # debug("msg_lst len: {}".format(len(self.msg_lst)))
-                        msg_timing =1
-                        # there is an ev in the list, cause not yet poped
-                        msg_pending =1
-                    """
-
             # click part
             if not self.click_track.is_active():
                 finishing =1
