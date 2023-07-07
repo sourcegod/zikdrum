@@ -986,7 +986,7 @@ class MidiBase(object):
         self.format_type =0
         self.numerator =4 # time signature
         self.denominator =4 # time signature
-        self.ppq = 120 # pulse per quarter, tick per beat
+        self.ppq = 120 # pulse per quarter, or ticks per beat
         self.bar = self.numerator * self.ppq # in ticks
         self.nb_beats = self.ppq * self.numerator # in ticks
         self.sec_per_beat = self.tempo / self.micro_sec # 
@@ -1114,9 +1114,9 @@ class MidiBase(object):
         # self.numerator =4 # time signature
         # self.denominator =4 # time signature
         # self.ppq = 120 # pulse per quarter, tick per beat
-        self.bar = self.numerator * self.ppq # in ticks
-        # self.nb_beats = self.ppq * self.numerator # in ticks
-        self.sec_per_beat = self.tempo / self.micro_sec # 
+        self.bar = self.numerator * self.ppq # in ticks, cause ppq is also number of ticks_per_beat
+        self.nb_beats = self.ppq * self.numerator # in ticks, cause ppq is also ticks_per_beat
+        self.sec_per_beat = float(self.tempo / self.micro_sec) # 
         self.sec_per_tick = float(self.sec_per_beat) / float(self.ppq)
         # debug(self.tempo)
 
@@ -2705,8 +2705,8 @@ class MidiSequence(object):
             names = ["", ""] # for name and instrument list of tracks
             self.track_names.append(names)
 
-        self.format_type = self.mid.type
-        self.base.ppq = self.mid.ticks_per_beat
+        self.format_type = int(self.mid.type)
+        self.base.ppq = int(self.mid.ticks_per_beat)
         for (tracknum, trackobj) in enumerate(self.mid.tracks):
             abstick =0
             channel_num = -1
@@ -2730,7 +2730,7 @@ class MidiSequence(object):
                         evt = MidiEvent()
                         evt.msg = msg
                     if msg.time == 0:
-                        self.base.tempo = msg.tempo
+                        self.base.tempo = int(msg.tempo)
                     # print(f"voici tempo: {msg.tempo}, time: {msg.time}")
                     # print("ticks_per_beat or ppq: {}".format(self.ppq))
                     # print(f"track: {tracknum}, Tempo: {msg.tempo}")
@@ -3093,8 +3093,10 @@ class MidiSequence(object):
                     newev.msg = ev.msg.copy()
                     newev.tracknum = tracknum
                     msg = newev.msg
-                    msg.time = self.base.tick2sec(msg.time)
-                    # debug("voici: {}".format(msg))
+                    # TODO: We rolling the timeline in time so, we need to convert tick to sec???
+                    # Not necessary
+                    # msg.time = self.base.tick2sec(msg.time)
+                    # debug("voici msg: {}".format(msg))
                     msg_lst.append(newev)
              
         return msg_lst
@@ -3104,11 +3106,14 @@ class MidiSequence(object):
     def get_properties(self):
         """
         returns properties midi file
-        from MidiPlayer object
+        from MidiSequence object
         """
         
         nb_tracks = len(self.track_lst)
-        msg = "Number tracks: {}, Format type: {}, ppq: {}, Bpm: {:.2f}, timesignature: {}/{},\nTempo: {}, Sec per beat: {:.3f}, Sec per tick: {:.3f}".format(nb_tracks, self.format_type, self.base.ppq, self.base.bpm, self.base.numerator, self.base.denominator, self.base.tempo, self.base.sec_per_beat, self.base.sec_per_tick)
+        msg = f"Number tracks: {nb_tracks}, Format type: {self.base.format_type}, ppq: {self.base.ppq},\n"\
+                f"Bpm: {self.base.bpm:.2f}, timesignature: {self.base.numerator}/{self.base.denominator},\n"\
+                f"Tempo: {self.base.tempo}, Sec per beat: {self.base.sec_per_beat:.6f}, Sec per tick: {self.base.sec_per_tick:.6f}"
+    # .format(nb_tracks, self.format_type, self.base.ppq, self.base.bpm, self.base.numerator, self.base.denominator, self.base.tempo, self.base.sec_per_beat, self.base.sec_per_tick)
         return msg
 
     #-----------------------------------------
