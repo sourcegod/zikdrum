@@ -532,7 +532,7 @@ class MidiTrack(MidiChannel):
 
     def search_ev_group(self, time):
         """
-        returns event list <= time
+        returns event list between last_pos, and <= time
         from MTrack object
         """
 

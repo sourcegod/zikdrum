@@ -10,6 +10,7 @@ import time
 import miditools as midto
 import midisequence as midseq
 import midisched as midsch
+from collections import deque
 
 
 DEBUG =1
@@ -83,6 +84,7 @@ class MidiPlayer(object):
         self.click_recording =0
         self.click_playing =0
         self.is_ready = False
+        self._deq_data = deque()
 
 
     #-----------------------------------------
@@ -898,6 +900,9 @@ class MidiPlayer(object):
 
         _is_running = self._midi_sched.is_running
         _get_midi_data = self.curseq.get_midi_data
+        _tick2sec = self._base.tick2sec
+        _sec2tick = self._base.sec2tick
+        _deq_data = self._deq_data
         if not (self._playing and _is_running()): return
         # Todo: dont init click_lst
         msg_ev = None
@@ -910,9 +915,10 @@ class MidiPlayer(object):
         click_timing =0
 
         seq_pos = self.get_position()
-        self.last_time = self._base.tick2sec(seq_pos)
-        seq_len = self.curseq.get_length()
+        self.last_time = _tick2sec(seq_pos)
+        seq_len = self.get_length()
         self.start_time = time.time() # self.init_time()
+        _count =0
 
         debug("")
         while self._playing and _is_running():
@@ -921,7 +927,7 @@ class MidiPlayer(object):
             ### Note: its depend for tick2sec function, sec_per_tick, sec_per_beat, and tempo variable
             curtime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
             # Convert this position in tick to get midi events
-            play_pos = self._base.sec2tick(curtime) # in tick
+            play_pos = _sec2tick(curtime) # in tick
             seq_pos = self.get_position() # in tick
             seq_len = self.get_length() # in tick
             # print(f"curtime: {self.curtime:.3f}, curtick: {self.playpos}, seq_pos: {seq_pos}")
@@ -947,7 +953,8 @@ class MidiPlayer(object):
                     msg_ev = None
                     msg_timing =0
                     msg_pending =0
-                    self.msg_lst = []
+                    # self.msg_lst = []
+                    _deq_data.clear()
                     # click part
                     click_ev = None
                     click_pending =0
@@ -958,13 +965,24 @@ class MidiPlayer(object):
                 if not msg_timing and not msg_pending:
                     finishing =1
                     # msg_lst can be saved
-                    if not self.msg_lst:
-                        # self.playpos = self._base.sec2tick(curtime)
-                        self.msg_lst = _get_midi_data(play_pos)
+                    # if not self.msg_lst:
+                    if not _deq_data: # convert collections container to boolean
+                        # play_pos = _sec2tick(curtime)
+                        # self.msg_lst = _get_midi_data(play_pos)
+                        _deq_data.extend( _get_midi_data(play_pos) )
+                        # if lst: _deq_data.extend(lst)
                         # debug("voici playpos: {}".format(self.playpos))
-                        if self.msg_lst:
+                        # if not self.msg_lst:
+                        if not _deq_data:
+                            # debug("je suis ici")
+                            _count += 1
+                            pass
+                        # if self.msg_lst:
+                        if _deq_data:
                             msg_pending =1
                             finishing =0
+                            # debug(f"Total Count: {_count}")
+                            _count =0
 
                     else: # msg_lst is not empty, cause it can be saved
                         msg_pending =1
@@ -972,8 +990,10 @@ class MidiPlayer(object):
                
                 # Getting msg_ev part
                 # whether is msg_lst or ev is pending
-                if msg_ev is None and msg_pending and self.msg_lst:
-                    msg_ev = self.msg_lst[0]
+                # if msg_ev is None and msg_pending and self.msg_lst:
+                if msg_ev is None and msg_pending and _deq_data:
+                    # msg_ev = self.msg_lst[0]
+                    msg_ev = _deq_data[0]
                     msg_timing =1
                     # there is data in the list
                     msg_pending =1
@@ -996,13 +1016,12 @@ class MidiPlayer(object):
                         
                         self.midi_man.send_imm(msg_ev.msg)
                     # delete msg in the buffer after sending
-                    try:
-                        self.msg_lst.pop(0)
-                    except IndexError:
-                        pass
+                    # self.msg_lst.pop(0)
+                    if _deq_data: _deq_data.popleft()
                     msg_ev = None
                     msg_timing =0
-                    if not self.msg_lst:
+                    # if not self.msg_lst:
+                    if not _deq_data:
                         msg_pending =0                
                 
             # click part
@@ -1040,7 +1059,7 @@ class MidiPlayer(object):
                         click_timing =0
                         if not click_lst:
                             click_pending =0                
-                    elif self.curtime < click_evcurmsg.time: 
+                    elif curtime < click_evcurmsg.time: 
                         click_timing =1
                         # maybe there is an ev in the list, cause not yet poped
                         click_pending =1
