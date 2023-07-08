@@ -470,6 +470,20 @@ class MidiPlayer(object):
 
     #-----------------------------------------
 
+    def goto_time(self, num=0):
+        """
+        Goto time in secs
+        from MidiPlayer object
+        """
+        
+        tick = self._base.sec2tick(num)
+        pos = self.set_position(tick)
+
+        return pos
+
+    #-----------------------------------------
+
+
 
     def goto_left_locator(self):
         """
@@ -919,7 +933,11 @@ class MidiPlayer(object):
         seq_len = self.get_length()
         self.start_time = time.time() # self.init_time()
         _count =0
-
+        curtime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
+        play_pos = _sec2tick(curtime) # in tick
+        print(f"curtime before: {curtime:.3f}, play_pos: {play_pos}")
+        
+        # """
         debug("")
         while self._playing and _is_running():
             # debug("In Loop")
@@ -953,7 +971,6 @@ class MidiPlayer(object):
                     msg_ev = None
                     msg_timing =0
                     msg_pending =0
-                    # self.msg_lst = []
                     _deq_data.clear()
                     # click part
                     click_ev = None
@@ -964,35 +981,27 @@ class MidiPlayer(object):
                 # Getting msg from data list
                 if not msg_timing and not msg_pending:
                     finishing =1
-                    # msg_lst can be saved
-                    # if not self.msg_lst:
                     if not _deq_data: # convert collections container to boolean
                         # play_pos = _sec2tick(curtime)
-                        # self.msg_lst = _get_midi_data(play_pos)
                         _deq_data.extend( _get_midi_data(play_pos) )
                         # if lst: _deq_data.extend(lst)
                         # debug("voici playpos: {}".format(self.playpos))
-                        # if not self.msg_lst:
                         if not _deq_data:
                             # debug("je suis ici")
                             _count += 1
                             pass
-                        # if self.msg_lst:
                         if _deq_data:
                             msg_pending =1
                             finishing =0
                             # debug(f"Total Count: {_count}")
                             _count =0
 
-                    else: # msg_lst is not empty, cause it can be saved
+                    else: # the buffer data can be saved
                         msg_pending =1
                         finishing =0
                
                 # Getting msg_ev part
-                # whether is msg_lst or ev is pending
-                # if msg_ev is None and msg_pending and self.msg_lst:
                 if msg_ev is None and msg_pending and _deq_data:
-                    # msg_ev = self.msg_lst[0]
                     msg_ev = _deq_data[0]
                     msg_timing =1
                     # there is data in the list
@@ -1016,11 +1025,9 @@ class MidiPlayer(object):
                         
                         self.midi_man.send_imm(msg_ev.msg)
                     # delete msg in the buffer after sending
-                    # self.msg_lst.pop(0)
                     if _deq_data: _deq_data.popleft()
                     msg_ev = None
                     msg_timing =0
-                    # if not self.msg_lst:
                     if not _deq_data:
                         msg_pending =0                
                 
@@ -1064,6 +1071,14 @@ class MidiPlayer(object):
                         # maybe there is an ev in the list, cause not yet poped
                         click_pending =1
             # time.sleep(0.001)
+
+        curtime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
+        # Convert this position in tick to get midi events
+        play_pos = _sec2tick(curtime) # in tick
+        # self.set_position(play_pos)
+        print(f"curtime after: {curtime:.3f}, play_pos: {play_pos}")
+        # _deq_data.clear()
+
 
     #-----------------------------------------
    

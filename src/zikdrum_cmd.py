@@ -81,7 +81,6 @@ class CommandApp(object):
                 ("midin", "midiin"): self.iap.change_midi_in,
                 ("midout", "midiout"): self.iap.change_midi_out,
                 ("synth", ): self.iap.change_synth,
-                ("bar", ): self.iap.get_bar,
                 ("bpm", ): self.iap.change_bpm,
         }
 
@@ -100,8 +99,9 @@ class CommandApp(object):
                 ("<", "gos", "gotostart"): self.iap.goto_start,
                 (">", "goe", "gotoend"): self.iap.goto_end,
                 ("go", "pos"): self.iap.set_position,
-                ("gob", "gotobar"): self.iap.goto_bar,
+                ("gob", "bar", "gotobar"): self.iap.goto_bar,
                 ("goc", "tic", "gototic"): self.iap.set_position,
+                ("got", "tim", "sec", "gototim"): self.iap.goto_time,
         }
 
         # dict list

@@ -238,6 +238,24 @@ class InterfaceApp(object):
     
     #-------------------------------------------
 
+    def format2time(self, nb_tick=-1):
+        """
+        convert tick to time
+        from InterfaceApp object
+        """
+        
+        # current position
+        if nb_tick == -1:
+            nb_tick = self.player.get_position()
+            
+        sec = self.curseq.base.tick2sec(nb_tick)
+        msg = f"{sec:.3f}"
+        
+        return msg
+    
+    #-------------------------------------------
+
+
     def new_player(self, *args, **kwargs):
         """
         create new player
@@ -320,38 +338,59 @@ class InterfaceApp(object):
 
     #------------------------------------------------------------------------------
 
-    def goto_bar(self, num=0, *args, **kwargs):
+    def goto_bar(self, num=None, *args, **kwargs):
         """
         goto bar number
         from Interface App object
         """
         
         # temporary take only the bar number
-        try:
-            num = int(num)
-        except ValueError:
-            return
-        self.player.goto_bar(num)
+        if num is None: pos = self.player.get_position()
+        else:
+            try:
+                num = int(num)
+            except ValueError:
+                num =0
+            self.player.goto_bar(num)
         bar = self.format2bar(-1)
-        self.msg_app = "Goto Bar at: {}".format(bar)
+        self.msg_app = "Bar at: {}".format(bar)
         self.notify(self.msg_app)
 
     #------------------------------------------------------------------------------
-    
+
+    def goto_time(self, num=None, *args, **kwargs):
+        """
+        goto sec number
+        from Interface App object
+        """
+        
+        # temporary take only seconds number
+        if num is None: pos = self.player.get_position()
+        else:
+            try:
+                num = float(num)
+            except ValueError:
+                num =0
+            pos = self.player.goto_time(num)
+        
+        pos = self.format2time(-1)
+        self.msg_app = f"Time at: {pos}"
+        self.notify(self.msg_app)
+
+    #------------------------------------------------------------------------------
+     
     def set_position(self, num=None, *args, **kwargs):
         """
         Gets, sets, or goto tick position
         from Interface App object
         """
         
-        if num is None:
-            pos = self.player.get_position()
+        if num is None: pos = self.player.get_position()
         else:
             try:
                 num = int(num)
             except ValueError:
-                pos =0
-            
+                num =0
             pos = self.player.set_position(num)
         
         self.msg_app = f"Tick At: {pos}"

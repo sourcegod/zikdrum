@@ -979,8 +979,10 @@ class MidiTrack(MidiChannel):
 class MidiBase(object):
     """ midi base manager """
     def __init__(self):
+        self.file_name = ""
         self.notes_name = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
         self.notes_lst = []
+        self._tempo_ref = 60_000_000 # in microsec
         self.tempo = 500000 # in microseconds
         self.micro_sec = 1e6
         self.format_type =0
@@ -989,9 +991,9 @@ class MidiBase(object):
         self.ppq = 120 # pulse per quarter, or ticks per beat
         self.bar = self.numerator * self.ppq # in ticks
         self.nb_beats = self.ppq * self.numerator # in ticks
-        self.sec_per_beat = self.tempo / self.micro_sec # 
+        self.sec_per_beat = self.tempo / self.micro_sec # in sec
         self.sec_per_tick = self.sec_per_beat / float(self.ppq)
-        self.bpm =0
+        self.bpm = self._tempo_ref / self.tempo
         self.playable_lst = ['note_off', 'note_on', 'polytouch', 
                 'control_change', 'program_change', 'aftertouch', 
                 'pitchwheel']
@@ -1073,7 +1075,8 @@ class MidiBase(object):
         from MidiBase object
         """
 
-        return int(nb_sec / self.sec_per_tick)
+        # We need rounding when passing from sec to ticks, for better playback accuracy
+        return round(nb_sec / self.sec_per_tick)
 
     #-----------------------------------------
 
@@ -1083,12 +1086,9 @@ class MidiBase(object):
         from MidiBase object
         """
         
-        val =0
-        if tempo > 0:
-            val = 60 * self.micro_sec / tempo
+        if tempo <= 0: return 0
+        return float(self._tempo_ref / tempo)
         
-        return val
-
     #-----------------------------------------
 
     def bpm2tempo(self, bpm):
@@ -1097,11 +1097,8 @@ class MidiBase(object):
         from MidiBase object
         """
         
-        val =0
-        if bpm > 0:
-            val = 60 * self.micro_sec / bpm
-        
-        return val
+        if bpm <= 0: return 0
+        return int(self._tempo_ref / bpm) # in microsec
 
     #-----------------------------------------
 
@@ -1118,7 +1115,21 @@ class MidiBase(object):
         self.nb_beats = self.ppq * self.numerator # in ticks, cause ppq is also ticks_per_beat
         self.sec_per_beat = float(self.tempo / self.micro_sec) # 
         self.sec_per_tick = float(self.sec_per_beat) / float(self.ppq)
+        self.tick_per_sec = round((1 / self.sec_per_beat) * self.ppq) # in tick
         # debug(self.tempo)
+        # self.bpm = (self._tempo_ref / self.tempo)
+
+    #-----------------------------------------
+
+    def set_bpm(self, bpm):
+        """
+        sets the bpm bellong the tempo
+        from MidiBase object
+        """
+        if bpm <= 0: return
+        self.tempo = int(self._tempo_ref / bpm)
+        self.bpm = bpm
+        self.update_tempo_params()
 
     #-----------------------------------------
 
@@ -1256,16 +1267,11 @@ class MidiMetronome(object):
         
         """
 
-        res =0
-        if bpm >0:
-            self._base.tempo = 60 * self._base.micro_sec / bpm
-            self._base.bpm = bpm
-            self._base.update_tempo_params()
-            res = bpm
+        if bpm <= 0: return 0
+        self._base.set_bpm(bpm)
 
-            return res
+        return bpm
             
-
     #-----------------------------------------
 
     def start_click(self):
@@ -2104,8 +2110,7 @@ class MidiSequence(object):
         from MidiSequence
         """
  
-        if pos == -1: 
-            pos = self.get_position()
+        if pos == -1: pos = self.get_position()
         
         bar = self.base.bar
         (nb_bars, nb_ticks) = divmod(pos, bar)
@@ -2707,6 +2712,7 @@ class MidiSequence(object):
 
         self.format_type = int(self.mid.type)
         self.base.ppq = int(self.mid.ticks_per_beat)
+        self.base.file_name = filename
         for (tracknum, trackobj) in enumerate(self.mid.tracks):
             abstick =0
             channel_num = -1
@@ -2981,19 +2987,16 @@ class MidiSequence(object):
         from MidiSequence object
         """
 
-        if bpm >0:
-            res = self.metronome.change_bpm(bpm)
-            self.base.bpm = bpm
-           
-            if res > 0:
-                print("je passe ici")
-                # changing tempo track
-                tracknum =0
-                timepos =0
-                self.change_event_tempo(tracknum, timepos, self.base.tempo)
-                # no necessary to regenerate the tempo track
-                # self.gen_tempo_track()
-                self.base.update_tempo_params()
+        ret = self.metronome.change_bpm(bpm)
+        if ret > 0:
+            # print("je passe ici")
+            # changing tempo track
+            tracknum =0
+            timepos =0
+            self.change_event_tempo(tracknum, timepos, self.base.tempo)
+            # no necessary to regenerate the tempo track
+            # self.gen_tempo_track()
+            self.base.update_tempo_params()
 
     #-----------------------------------------
 
@@ -3110,10 +3113,10 @@ class MidiSequence(object):
         """
         
         nb_tracks = len(self.track_lst)
-        msg = f"Number tracks: {nb_tracks}, Format type: {self.base.format_type}, ppq: {self.base.ppq},\n"\
-                f"Bpm: {self.base.bpm:.2f}, timesignature: {self.base.numerator}/{self.base.denominator},\n"\
-                f"Tempo: {self.base.tempo}, Sec per beat: {self.base.sec_per_beat:.6f}, Sec per tick: {self.base.sec_per_tick:.6f}"
-    # .format(nb_tracks, self.format_type, self.base.ppq, self.base.bpm, self.base.numerator, self.base.denominator, self.base.tempo, self.base.sec_per_beat, self.base.sec_per_tick)
+        msg = f"File name: {self.base.file_name}, Format type: {self.base.format_type},\n"\
+                f"Number of tracks: {nb_tracks}, PPQ or Ticks Per Beat: {self.base.ppq},\n"\
+                f"Bpm: {self.base.bpm:.2f}, Tempo: {self.base.tempo}, timesignature: {self.base.numerator}/{self.base.denominator},\n"\
+                f"Sec per beat: {self.base.sec_per_beat:.3f}, Sec per tick: {self.base.sec_per_tick:.3f}, Tick per sec: {self.base.tick_per_sec}"
         return msg
 
     #-----------------------------------------
