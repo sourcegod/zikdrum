@@ -2150,7 +2150,7 @@ class MidiSequence(object):
     
     def get_bar(self, pos=-1):
         """
-        TODO: this function can be replaced by bar2tick in MidiBase object
+        TODO: this function can be replaced by tick2bar in MidiBase object
         convert pos in tick to bar
         from MidiSequence
         """
