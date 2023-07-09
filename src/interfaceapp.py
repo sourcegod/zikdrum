@@ -245,9 +245,7 @@ class InterfaceApp(object):
         """
         
         # current position
-        if nb_tick == -1:
-            nb_tick = self.player.get_position()
-            
+        if nb_tick == -1: nb_tick = self.player.get_position()
         sec = self.curseq.base.tick2sec(nb_tick)
         msg = f"{sec:.3f}"
         
@@ -255,6 +253,21 @@ class InterfaceApp(object):
     
     #-------------------------------------------
 
+    def format2beat(self, nb_tick=-1):
+        """
+        Format tick to beat
+        from InterfaceApp object
+        """
+        
+        # current position
+        if nb_tick == -1: nb_tick = self.player.get_position()
+        beat = self.curseq.base.tick2beat(nb_tick)
+        beat +=1
+        msg = f"{beat}"
+        
+        return msg
+    
+    #-------------------------------------------
 
     def new_player(self, *args, **kwargs):
         """
@@ -378,7 +391,29 @@ class InterfaceApp(object):
         self.notify(self.msg_app)
 
     #------------------------------------------------------------------------------
-     
+
+    def goto_beat(self, pos=None, *args, **kwargs):
+        """
+        goto beat number
+        from Interface App object
+        """
+        
+        if pos is None: pos =-1 # take current position
+        else:
+            try:
+                pos = int(pos)
+            except ValueError:
+                pos =0
+            if pos >0: pos -=1 # temporary, before calculate beat to tick
+            pos = self.curseq.base.beat2tick(pos)
+            self.player.set_position(pos)
+        
+        pos = self.format2beat(-1)
+        self.msg_app = f"Beat at: {pos}"
+        self.notify(self.msg_app)
+
+    #------------------------------------------------------------------------------
+      
     def set_position(self, num=None, *args, **kwargs):
         """
         Gets, sets, or goto tick position

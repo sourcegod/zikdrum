@@ -1058,6 +1058,34 @@ class MidiBase(object):
 
     #-----------------------------------------
 
+    def tick2beat(self, pos):
+        """
+        convert pos in tick to beat
+        from MidiBase object
+        """
+ 
+        if self.ppq <=0: return 0
+        nb_beats = (pos // self.ppq)
+        # nb_beats +=1
+        
+        return nb_beats
+    
+    #-----------------------------------------
+
+    def beat2tick(self, pos):
+        """
+        convert beats values to tick
+        from MidiBase object
+        """
+ 
+        if self.ppq <=0: return 0
+        nb_ticks = (pos * self.ppq)
+        
+        return nb_ticks
+    
+    #-----------------------------------------
+
+
     def tick2sec(self, nb_tick):
         """
         convert ticks to seconds
@@ -2124,9 +2152,17 @@ class MidiSequence(object):
         return (nb_bars, nb_beats, nb_ticks)
     
     #-----------------------------------------
-
-
+    def get_ppq(self):
+        """
+        Returns the PPQ or number of Ticks per beat
+        from MidiSequence object
+        """
  
+        return self.base.ppq
+   
+    #-----------------------------------------
+
+
     def get_tracknum(self):
         """
         returns track index

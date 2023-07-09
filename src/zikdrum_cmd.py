@@ -96,12 +96,13 @@ class CommandApp(object):
                 ("st", "stop"): self.iap.stop,
                 ("w", "rw", "rewind"): self.iap.rewind,
                 ("b", "fw", "forward"): self.iap.forward,
-                ("<", "gos", "gotostart"): self.iap.goto_start,
-                (">", "goe", "gotoend"): self.iap.goto_end,
+                ("<", "gos", "gostart"): self.iap.goto_start,
+                (">", "goe", "goend"): self.iap.goto_end,
                 ("go", "pos"): self.iap.set_position,
-                ("gob", "bar", "gotobar"): self.iap.goto_bar,
-                ("goc", "tic", "gototic"): self.iap.set_position,
-                ("got", "tim", "sec", "gototim"): self.iap.goto_time,
+                ("gob", "bar", "gobar"): self.iap.goto_bar,
+                ("goc", "tic", "gotick"): self.iap.set_position,
+                ("got", "tim", "sec", "gotime"): self.iap.goto_time,
+                ("gobt", "bet", "gobeat"): self.iap.goto_beat,
         }
 
         # dict list
