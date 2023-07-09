@@ -1058,6 +1058,22 @@ class MidiBase(object):
 
     #-----------------------------------------
 
+    def bar2tick(self, num):
+        """
+        Convert bar to tick
+        from MidiSequence object
+        """
+        
+        if num <=0: num =0
+        else: num -=1 # temporary, before calculate tick to bar
+        # position is in ticks
+        pos = self.bar * num
+
+        return pos
+
+    #-----------------------------------------
+
+
     def tick2beat(self, pos):
         """
         convert pos in tick to beat

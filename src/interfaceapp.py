@@ -225,9 +225,7 @@ class InterfaceApp(object):
         """
         
         # current position
-        if nb_tick == -1:
-            nb_tick = self.player.get_position()
-            
+        if nb_tick == -1: nb_tick = self.player.get_position()
         (nb_bar, nb_beat, nb_tick) = self.curseq.base.tick2bar(nb_tick)
         nb_bar +=1 # for user friendly
         nb_beat +=1
@@ -235,21 +233,6 @@ class InterfaceApp(object):
         bar = "{}:{:02d}:{:03d}".format(nb_bar, nb_beat, nb_tick)
         
         return bar
-    
-    #-------------------------------------------
-
-    def format2time(self, nb_tick=-1):
-        """
-        convert tick to time
-        from InterfaceApp object
-        """
-        
-        # current position
-        if nb_tick == -1: nb_tick = self.player.get_position()
-        sec = self.curseq.base.tick2sec(nb_tick)
-        msg = f"{sec:.3f}"
-        
-        return msg
     
     #-------------------------------------------
 
@@ -264,6 +247,21 @@ class InterfaceApp(object):
         beat = self.curseq.base.tick2beat(nb_tick)
         beat +=1
         msg = f"{beat}"
+        
+        return msg
+    
+    #-------------------------------------------
+
+    def format2time(self, nb_tick=-1):
+        """
+        convert tick to time
+        from InterfaceApp object
+        """
+        
+        # current position
+        if nb_tick == -1: nb_tick = self.player.get_position()
+        sec = self.curseq.base.tick2sec(nb_tick)
+        msg = f"{sec:.3f}"
         
         return msg
     
@@ -364,7 +362,9 @@ class InterfaceApp(object):
                 num = int(num)
             except ValueError:
                 num =0
-            self.player.goto_bar(num)
+            pos = self.curseq.base.bar2tick(num)
+            self.player.set_position(pos)
+
         bar = self.format2bar(-1)
         self.msg_app = "Bar at: {}".format(bar)
         self.notify(self.msg_app)
@@ -384,7 +384,8 @@ class InterfaceApp(object):
                 num = float(num)
             except ValueError:
                 num =0
-            pos = self.player.goto_time(num)
+            tick = self.curseq.base.sec2tick(num)
+            pos = self.player.set_position(tick)
         
         pos = self.format2time(-1)
         self.msg_app = f"Time at: {pos}"

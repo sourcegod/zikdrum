@@ -350,27 +350,6 @@ class MidiPlayer(object):
        
     #-----------------------------------------
 
-    def set_bar(self, num=0):
-        """
-        set bar number
-        from MidiPlayer object
-        """
-        
-        try:
-            num = int(num)
-        except ValueError:
-            return
-
-        if num <=0: num =0
-        else: num -=1 # temporary, before calculate tick to bar
-        # position is in ticks
-        pos = self.curseq.base.bar * num
-        self.set_position(pos)
-
-        return pos
-
-    #-----------------------------------------
-
     def prev_bar(self, step=1):
         """
         set prev bar 
@@ -458,33 +437,6 @@ class MidiPlayer(object):
 
     #-----------------------------------------
     
-    def goto_bar(self, num=0):
-        """
-        goto Bar
-        from MidiPlayer object
-        """
-        
-        pos = self.set_bar(num)
-
-        return pos
-
-    #-----------------------------------------
-
-    def goto_time(self, num=0):
-        """
-        Goto time in secs
-        from MidiPlayer object
-        """
-        
-        tick = self._base.sec2tick(num)
-        pos = self.set_position(tick)
-
-        return pos
-
-    #-----------------------------------------
-
-
-
     def goto_left_locator(self):
         """
         goto left locator 
