@@ -1065,7 +1065,7 @@ class MidiBase(object):
         """
         
         if num <=0: num =0
-        else: num -=1 # temporary, before calculate tick to bar
+        # else: num -=1 # temporary, before calculate tick to bar
         # position is in ticks
         pos = self.bar * num
 
@@ -2150,6 +2150,7 @@ class MidiSequence(object):
     
     def get_bar(self, pos=-1):
         """
+        TODO: this function can be replaced by bar2tick in MidiBase object
         convert pos in tick to bar
         from MidiSequence
         """
@@ -2168,6 +2169,7 @@ class MidiSequence(object):
         return (nb_bars, nb_beats, nb_ticks)
     
     #-----------------------------------------
+
     def get_ppq(self):
         """
         Returns the PPQ or number of Ticks per beat

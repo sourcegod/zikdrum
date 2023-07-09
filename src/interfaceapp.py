@@ -362,8 +362,8 @@ class InterfaceApp(object):
                 num = int(num)
             except ValueError:
                 num =0
-            pos = self.curseq.base.bar2tick(num)
-            self.player.set_position(pos)
+            if num >0: num -=1 # for friendly formatting 
+            self.player.goto_bar(num)
 
         bar = self.format2bar(-1)
         self.msg_app = "Bar at: {}".format(bar)

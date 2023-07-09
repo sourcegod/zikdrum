@@ -340,6 +340,7 @@ class MidiPlayer(object):
 
     def get_bar(self, pos=-1):
         """
+        TODO: this function can be replaced by bar2tick in MidiBase object
         convert pos in tick to bar
         from MidiPlayer
         """
@@ -350,6 +351,18 @@ class MidiPlayer(object):
        
     #-----------------------------------------
 
+
+    def goto_bar(self, pos):
+        """
+        Goto bar number
+        from MidiPlayer
+        """
+        
+        pos = self._base.bar2tick(pos)
+        self.set_position(pos)
+
+    #-----------------------------------------
+
     def prev_bar(self, step=1):
         """
         set prev bar 
@@ -358,10 +371,11 @@ class MidiPlayer(object):
         
         if step <=0: step =1
         pos = self.get_position() # in ticks
-        bar = self.curseq.base.bar * step
-        (div, rest) = divmod(pos, bar)
+        nb_tick = self._base.bar2tick(step)
+        if nb_tick <=0: return # avoid Zero Division Error
+        (div, rest) = divmod(pos, nb_tick)
         if rest == 0:
-            pos -= bar
+            pos -= nb_tick
         else:
             pos -= rest
         
@@ -379,12 +393,13 @@ class MidiPlayer(object):
         
         pos = self.get_position() # in ticks
         if step <=0: step =1
-        bar = self.curseq.base.bar * step
-        (div, rest) = divmod(pos, bar)
+        nb_tick = self._base.bar2tick(step)
+        if nb_tick <=0: return # avoid Zero Division Error
+        (div, rest) = divmod(pos, nb_tick)
         if rest == 0:
-            pos += bar
+            pos += nb_tick
         else:
-            pos += bar - rest
+            pos += nb_tick - rest
         
         self.set_position(pos)
 
