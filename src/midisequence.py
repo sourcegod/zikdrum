@@ -481,6 +481,26 @@ class MidiTrack(MidiChannel):
 
     #-----------------------------------------
 
+    def get_prev_ev(self):
+        """
+        Returns prev event without changing position in the ev list
+        from MTrack object
+        """
+
+        ret = None
+        pos = self.pos
+        if pos >0:
+            pos -=1
+            try:
+                ret = self.ev_lst[pos]
+            except IndexError:
+                pass
+
+        return ret
+
+    #-----------------------------------------
+
+
     def prev_ev(self):
         """
         set prev event
@@ -498,6 +518,36 @@ class MidiTrack(MidiChannel):
         return res
 
     #-----------------------------------------
+
+    def get_next_ev(self):
+        """
+        Returns next event without changing position in ev list
+        from MTrack object
+        """
+
+        ret = None
+        pos = self.pos
+        if pos < len(self.ev_lst):
+            pos +=1
+            try:
+                ret = self.ev_lst[pos]
+            except IndexError:
+                pass
+        elif pos >= len(self.ev_lst):
+            if self.repeating:
+                pos =0
+                try:
+                    ret = self.ev_lst[pos]
+                    # debug("repeat count: {}".format(self.repeat_count))
+                except IndexError:
+                    pass
+            else: # no repeating
+                pass
+        
+        return ret
+
+    #-----------------------------------------
+
 
     def next_ev(self):
         """
@@ -587,13 +637,13 @@ class MidiTrack(MidiChannel):
         """
         
 
-        res =-1
+        ret =-1
         try:
-            res = self.group_lst[self.group_index]
+            ret = self.group_lst[self.group_index]
         except IndexError:
             pass
 
-        return res
+        return ret
     
     #-----------------------------------------
 
@@ -632,6 +682,27 @@ class MidiTrack(MidiChannel):
         return curpos
     
     #-----------------------------------------
+    
+    def get_next_group_pos(self):
+        """
+        returns next ev group index from ev group list
+        from MidiTrack object
+        """
+
+        ret =-1
+        index = self.group_index
+        index +=1
+        if index < len(self.group_lst):
+            try:
+                pos = self.group_lst[index]
+                ret = self.ev_lst[pos].msg.time
+            except IndexError:
+                pass
+
+        return ret
+    
+    #-----------------------------------------
+
 
     def get_group_range(self):
         """
@@ -1704,6 +1775,8 @@ class MidiSequence(object):
         self.clipboard = []
         self.group_ev = None
         self.old_tempo =120
+        self._next_pos =0
+        self._last_pos =0
 
     #-----------------------------------------
 
@@ -1758,6 +1831,7 @@ class MidiSequence(object):
             track.midi_man = self.midi_man
             track.channel_num =9 # drum channel
             track.set_pos(0)
+            track.gen_group_pos()
         # init bar number and loop state
         self.start_loop =0
         self.end_loop = self.base.bar * 2
@@ -2885,6 +2959,7 @@ class MidiSequence(object):
             # print(track_name, instrument_name)
             if ev_lst:
                 track.add_evs(*ev_lst)
+                track.gen_group_pos()
                 res =1
             self.track_lst.append(track)
             self.track_names.append(names)
@@ -3115,9 +3190,81 @@ class MidiSequence(object):
 
     #-----------------------------------------
 
-    def get_midi_data(self, curtick):
+    def get_next_ev_list(self):
         """
-        returns midi data
+        Note: Deprecated function
+        returns next event sorted list of all tracks
+        from MidiSequence object
+        """
+
+        ev_lst = []
+        for track in self.track_lst:
+            ev = track.get_next_ev()
+            if ev: ev_lst.append(ev)
+        # sorting the event list
+        if ev_lst:
+            ev_lst.sort(key=lambda x: x.msg.time)
+
+        return ev_lst
+
+    #-----------------------------------------
+
+    def get_next_ev_pos(self):
+        """
+        Note: Deprecated function
+        returns the minimum next event time from the sorting ev list on all tracks
+        from MidiSequence object
+        """
+
+        if self._next_pos >=0: return self._next_pos
+        ev_lst = self.get_next_ev_list()
+        if not ev_lst: return -1
+        self._next_pos = ev_lst[0].msg.time
+        
+        return self._next_pos
+
+    #-----------------------------------------
+
+    def get_next_group_pos_list(self):
+        """
+        Note: Deprecated function
+        returns next group ev position  sorted list of all tracks
+        from MidiSequence object
+        """
+
+        ev_lst = []
+        for track in self.track_lst:
+            pos = track.get_next_group_pos()
+            if pos >=0: ev_lst.append(pos)
+        # sorting the event list
+        if ev_lst:
+            ev_lst.sort()
+
+        return ev_lst
+
+    #-----------------------------------------
+
+    def get_next_group_pos(self):
+        """
+        Note: Deprecated function
+        returns the minimum next group position from the sorting group list position
+        from MidiSequence object
+        """
+
+        if self._next_pos >=0: return self._next_pos
+        group_lst = self.get_next_group_pos_list()
+        print(f"voici group_lst: {group_lst}")
+        if not group_lst: return -1
+        self._next_pos = group_lst[0]
+        
+        return self._next_pos
+
+    #-----------------------------------------
+
+
+    def get_playable_data(self, curtick):
+        """
+        returns playable midi event list
         from MidiSequence object
         """
 
@@ -3137,14 +3284,14 @@ class MidiSequence(object):
                         # print(f"Type Set_tempo, tempo: {ev.msg.tempo}, bpm: {bpm:.3f}, msec: {msec:.3f}")
                 if ev.msg.type in self.base.playable_lst:
                     
-                    # """
+                    """
                     # not work
                     if self.base.tempo != self.old_tempo:
                         self.base.tempo = self.old_tempo
                         # self.base.update_tempo_params()
                         # self.set_position(-1)
                         pass
-                    # """
+                    """
 
                     newev = MidiEvent()
                     newev.msg = ev.msg.copy()
@@ -3156,6 +3303,13 @@ class MidiSequence(object):
                     # debug("voici msg: {}".format(msg))
                     msg_lst.append(newev)
              
+        # saving the last event position
+        if msg_lst:
+            # self.curpos = msg_lst[0].msg.time
+            self._last_pos = self.curpos
+            # init next ev position
+            self._next_pos =-1
+        
         return msg_lst
 
     #-----------------------------------------

@@ -786,7 +786,7 @@ class MidiPlayer(object):
                     if not self.msg_lst:
                         self.playpos = self.curseq.base.sec2tick(curtime)
                         # self._base.update_tempo_params()
-                        self.msg_lst = self.curseq.get_midi_data(self.playpos)
+                        self.msg_lst = self.curseq.get_playable_data(self.playpos)
                         # debug("voici playpos: {}".format(self.playpos))
                         if self.msg_lst:
                             msg_pending =1
@@ -880,7 +880,7 @@ class MidiPlayer(object):
         """
 
         _is_running = self._midi_sched.is_running
-        _get_midi_data = self.curseq.get_midi_data
+        _get_playable_data = self.curseq.get_playable_data
         _tick2sec = self._base.tick2sec
         _sec2tick = self._base.sec2tick
         _deq_data = self._deq_data
@@ -902,9 +902,9 @@ class MidiPlayer(object):
         _count =0
         curtime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
         play_pos = _sec2tick(curtime) # in tick
-        print(f"curtime before: {curtime:.3f}, play_pos: {play_pos}")
         
-        # """
+        # print(f"curtime before: {curtime:.3f}, play_pos: {play_pos}")
+        
         debug("")
         while self._playing and _is_running():
             # debug("In Loop")
@@ -915,6 +915,7 @@ class MidiPlayer(object):
             play_pos = _sec2tick(curtime) # in tick
             seq_pos = self.get_position() # in tick
             seq_len = self.get_length() # in tick
+            # self.set_play_pos(play_pos)
             # print(f"curtime: {self.curtime:.3f}, curtick: {self.playpos}, seq_pos: {seq_pos}")
             if not self._playing:
                 finishing =1
@@ -950,13 +951,12 @@ class MidiPlayer(object):
                     finishing =1
                     if not _deq_data: # convert collections container to boolean
                         # play_pos = _sec2tick(curtime)
-                        _deq_data.extend( _get_midi_data(play_pos) )
+                        _deq_data.extend( _get_playable_data(play_pos) )
                         # if lst: _deq_data.extend(lst)
                         # debug("voici playpos: {}".format(self.playpos))
                         if not _deq_data:
                             # debug("je suis ici")
                             _count += 1
-                            pass
                         if _deq_data:
                             msg_pending =1
                             finishing =0
@@ -1043,8 +1043,7 @@ class MidiPlayer(object):
         # Convert this position in tick to get midi events
         play_pos = _sec2tick(curtime) # in tick
         # self.set_position(play_pos)
-        print(f"curtime after: {curtime:.3f}, play_pos: {play_pos}")
-        # _deq_data.clear()
+        # print(f"curtime after: {curtime:.3f}, play_pos: {play_pos}")
 
 
     #-----------------------------------------
