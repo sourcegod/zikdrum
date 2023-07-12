@@ -361,6 +361,17 @@ class MidiTrack(MidiChannel):
 
     #-----------------------------------------
 
+    def clear(self):
+        """
+        Clear events list
+        from Miditrack object
+        """
+        
+        self.ev_lst = []
+
+    #-----------------------------------------
+
+
     def get_length(self):
         """
         returns track length
@@ -1777,6 +1788,7 @@ class MidiSequence(object):
         self.old_tempo =120
         self._next_pos =0
         self._last_pos =0
+        self._timeline = None # A MidiTrack object
 
     #-----------------------------------------
 
@@ -1817,7 +1829,7 @@ class MidiSequence(object):
 
     #-----------------------------------------
 
-    def init_sequencer(self, midi_driver):
+    def init_sequencer(self, midi_driver=None):
         """
         init midi sequencer
         from MidiSequence object
@@ -1832,6 +1844,11 @@ class MidiSequence(object):
             track.channel_num =9 # drum channel
             track.set_pos(0)
             track.gen_group_pos()
+        # Generate timeline track
+        self._timeline = MidiTrack()
+        self._timeline.init()
+        self.gen_timeline()
+
         # init bar number and loop state
         self.start_loop =0
         self.end_loop = self.base.bar * 2
@@ -1843,6 +1860,41 @@ class MidiSequence(object):
         self.quantizing =1
         # generate notes name list
         self.base.gen_notes()
+
+    #-----------------------------------------
+
+    def gen_timeline(self):
+        """
+        Generate timeline midi track
+        from MidiSequence object
+        """
+        
+        timeline = self._timeline
+        # filtering events with uniq time
+        timeline.clear()
+        total_count =0
+        for track in self.track_lst:
+            ev_lst = track.get_list()
+            curtime =-1
+            for ev in ev_lst:
+                evtime = ev.msg.time
+                if evtime != curtime:
+                    timeline.append(ev)
+                    curtime = evtime
+                total_count +=1
+        # sorting the timeline
+        timeline.sort()
+        timeline.set_pos(0)
+
+        # Not necessary
+        # generate group position for the timeline
+        # timeline.gen_group_pos()
+        count = timeline.count()
+        if count:
+            first_tick = timeline.ev_lst[0].msg.time
+            last_tick = timeline.ev_lst[-1].msg.time
+            debug(f"Timeline count: {count}, / total_count: {total_count}, first_tick: {first_tick}, last_tick: {last_tick}")
+
 
     #-----------------------------------------
 
@@ -2967,6 +3019,7 @@ class MidiSequence(object):
         if res:
             bpm = self.base.tempo2bpm(self.base.tempo)
             self.click_track = self.metronome.init_click(bpm)
+            self.gen_timeline()
             # self.set_bpm(bpm)
             # self.base.update_tempo_params()
             # self.gen_tempo_track()
@@ -3333,5 +3386,6 @@ class MidiSequence(object):
 
 if __name__ == "__main__":
     seq = MidiSequence()
+    seq.init_sequencer()
     input("It's OK")
 #-----------------------------------------
