@@ -559,11 +559,10 @@ class MidiTrack(MidiChannel):
 
     #-----------------------------------------
 
-
     def next_ev(self):
         """
         set next event
-        from MTrack object
+        from MidiTrack object
         """
 
         res = None
@@ -588,6 +587,32 @@ class MidiTrack(MidiChannel):
                 # self.lastpos =-1
 
         return res
+
+    #-----------------------------------------
+    
+    def prev_ev_time(self):
+        """
+        returns previous event time in the event list
+        from MidiTrack object
+        """
+        
+        ev = self.prev_ev()
+        if ev is None: return -1
+        
+        return ev.msg.time
+
+    #-----------------------------------------
+
+    def next_ev_time(self):
+        """
+        returns next event time in the event list
+        from MidiTrack object
+        """
+        
+        ev = self.next_ev()
+        if ev is None: return -1
+        
+        return ev.msg.time
 
     #-----------------------------------------
 
@@ -839,21 +864,33 @@ class MidiTrack(MidiChannel):
 
     def set_pos(self, pos):
         """
-        set position in event list
-        from Mtrack object
+        Sets the track position in event list
+        from MidiTrack object
         """
         
         ev_len = len(self.ev_lst)
-        if pos == -1:
-            self.pos = ev_len -1
+        if pos == -1: pos = ev_len -1
         elif pos >=0 and pos < ev_len:
             self.pos = pos
-        # update event group position
-        if self.ev_grouping:
-            self.update_group_pos(0)
+            # update event group position
+            if self.ev_grouping:
+                self.update_group_pos(0)
     
     #-----------------------------------------
-    
+
+    def update_track_pos(self, pos=-1):
+        """
+        Updating the track position by searching the right time
+        from MidiTrack object
+        """
+
+        if pos == -1: pos = self.pos
+        self.lastpos =-1
+        index = self.search_pos(pos)
+        self.set_pos(index)
+
+    #-----------------------------------------
+
     def update_group_pos(self, grouping=0):
         """
         update ev group position
@@ -1920,7 +1957,7 @@ class MidiSequence(object):
 
     def set_position(self, pos):
         """
-        set player position
+        set the Sequence position
         from MidiSequence object
         """
 
@@ -1934,6 +1971,9 @@ class MidiSequence(object):
         seq_len = self.get_length()
         pos = limit_value(pos, 0, seq_len)
         self.update_tracks_position(pos) 
+        # Sets the timeline position
+        tim = self._timeline
+        tim.update_track_pos(pos)
         self.curpos = pos
         if state:
             # self.parent.start_midi_engine()

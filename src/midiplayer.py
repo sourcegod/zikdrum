@@ -884,6 +884,7 @@ class MidiPlayer(object):
         _tick2sec = self._base.tick2sec
         _sec2tick = self._base.sec2tick
         _deq_data = self._deq_data
+        _timeline = self.curseq._timeline
         if not (self._playing and _is_running()): return
         # Todo: dont init click_lst
         msg_ev = None
@@ -902,6 +903,7 @@ class MidiPlayer(object):
         _count =0
         curtime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
         play_pos = _sec2tick(curtime) # in tick
+        next_pos =0
         
         # print(f"curtime before: {curtime:.3f}, play_pos: {play_pos}")
         
@@ -950,18 +952,19 @@ class MidiPlayer(object):
                 if not msg_timing and not msg_pending:
                     finishing =1
                     if not _deq_data: # convert collections container to boolean
-                        # play_pos = _sec2tick(curtime)
-                        _deq_data.extend( _get_playable_data(play_pos) )
-                        # if lst: _deq_data.extend(lst)
-                        # debug("voici playpos: {}".format(self.playpos))
-                        if not _deq_data:
-                            # debug("je suis ici")
-                            _count += 1
-                        if _deq_data:
-                            msg_pending =1
-                            finishing =0
-                            # debug(f"Total Count: {_count}")
-                            _count =0
+                        if play_pos >= next_pos:
+                            # play_pos = _sec2tick(curtime)
+                            _deq_data.extend( _get_playable_data(next_pos) )
+                            # debug(f"voici next_pos: {next_pos}")
+                            next_pos = _timeline.next_ev_time()
+                            if not _deq_data:
+                                # debug("je suis ici")
+                                _count += 1
+                            if _deq_data:
+                                msg_pending =1
+                                finishing =0
+                                if _count: debug(f"Total Count: {_count}, with next_pos: {next_pos}")
+                                _count =0
 
                     else: # the buffer data can be saved
                         msg_pending =1
