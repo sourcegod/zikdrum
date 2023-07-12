@@ -8,6 +8,7 @@
     Author: Coolbrother
 """
 import time
+import itertools
 import mido
 import miditools as midto
 import constants as cst
@@ -16,31 +17,21 @@ DEBUG =1
 _logfile = None
 
 def debug(msg="", title="", bell=True, write_file=False, stdout=True, endline=False):
+    txt = ""
     if DEBUG:
+        if title: txt = f"{title}: "
+        if msg: txt += f"{msg}"
+        
         if stdout:
-            txt = ""
-            if title and not msg:
-                txt = "{}".format(title)
-            elif msg and not title:
-                txt = "{}".format(msg)
-            elif msg and title:
-                txt = "{}: {}".format(title, msg)
             print(txt)
 
         if bell:
-            # curses.beep()
             print("\a")
+
         if write_file:
+            # open file in append mode
             with open('/tmp/zikdrum.log', 'a') as fh:
                 # _logfile.write("{}:\ {}\n".format(title, msg))
-                txt = ""
-                if title and not msg:
-                    txt = "{}:".format(title)
-                elif msg and not title:
-                    txt = "{}".format(msg)
-                elif title and msg:
-                    txt = "{}:\n{}".format(title, msg)
-
                 print(txt, file=fh) 
 
                 if endline:
@@ -1906,32 +1897,32 @@ class MidiSequence(object):
         from MidiSequence object
         """
         
-        timeline = self._timeline
+        tim = self._timeline
         # filtering events with uniq time
-        timeline.clear()
+        tim.clear()
         total_count =0
         for track in self.track_lst:
-            ev_lst = track.get_list()
+            ev_lst = track.ev_lst
             curtime =-1
             for ev in ev_lst:
-                evtime = ev.msg.time
-                if evtime != curtime:
-                    timeline.append(ev)
-                    curtime = evtime
+                ev_time = ev.msg.time
+                if ev_time != curtime:
+                    tim.append(ev)
+                    curtime = ev_time
                 total_count +=1
-        # sorting the timeline
-        timeline.sort()
-        timeline.set_pos(0)
+        # sorting the timeline and make uniq item
+        ev_lst = tim.ev_lst
+        tim.ev_lst = list(k for k, _ in itertools.groupby(sorted(ev_lst, key=lambda x: x.msg.time)))
+        tim.set_pos(0)
 
         # Not necessary
         # generate group position for the timeline
-        # timeline.gen_group_pos()
-        count = timeline.count()
+        # tim.gen_group_pos()
+        count = tim.count()
         if count:
-            first_tick = timeline.ev_lst[0].msg.time
-            last_tick = timeline.ev_lst[-1].msg.time
+            first_tick = tim.ev_lst[0].msg.time
+            last_tick = tim.ev_lst[-1].msg.time
             debug(f"Timeline count: {count}, / total_count: {total_count}, first_tick: {first_tick}, last_tick: {last_tick}")
-
 
     #-----------------------------------------
 
@@ -3362,9 +3353,15 @@ class MidiSequence(object):
         """
 
         msg_lst = []
+        debug(f"\nFunc: get_playable_data, at curtick: {curtick}", write_file=True)
         for (tracknum, track) in enumerate(self.track_lst):
             ev_lst = track.search_ev_group(curtick)
+            if not ev_lst: 
+                debug(f"No ev_lst at curtick: {curtick}, on tracknum {tracknum}", write_file=True)
+            else: 
+                debug(f"Len ev_lst: {len(ev_lst)},  at curtick: {curtick}, on tracknum {tracknum}", write_file=True)
             for ev in ev_lst:
+                debug(f"msg type: {ev.msg.type}, {ev.msg}", write_file=True)
                 if ev.msg.type == "set_tempo":
                     new_tempo = ev.msg.tempo
                     if self.base.tempo != new_tempo:
@@ -3376,7 +3373,6 @@ class MidiSequence(object):
                         bpm = self.base.tempo2bpm(ev.msg.tempo)
                         # print(f"Type Set_tempo, tempo: {ev.msg.tempo}, bpm: {bpm:.3f}, msec: {msec:.3f}")
                 if ev.msg.type in self.base.playable_lst:
-                    
                     """
                     # not work
                     if self.base.tempo != self.old_tempo:
@@ -3396,13 +3392,11 @@ class MidiSequence(object):
                     # debug("voici msg: {}".format(msg))
                     msg_lst.append(newev)
              
-        # saving the last event position
-        if msg_lst:
-            # self.curpos = msg_lst[0].msg.time
-            self._last_pos = self.curpos
-            # init next ev position
-            self._next_pos =-1
-        
+        if not msg_lst:
+            debug(f"No msg_lst, at curtick: {curtick}\n", write_file=True)
+        else:
+            debug(f"msg_lst len: {len(msg_lst)}, at curtick: {curtick}\n", write_file=True)
+       
         return msg_lst
 
     #-----------------------------------------

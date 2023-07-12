@@ -17,31 +17,21 @@ DEBUG =1
 _logfile = None
 
 def debug(msg="", title="", bell=True, write_file=False, stdout=True, endline=False):
+    txt = ""
     if DEBUG:
+        if title: txt = f"{title}: "
+        if msg: txt += f"{msg}"
+        
         if stdout:
-            txt = ""
-            if title and not msg:
-                txt = "{}".format(title)
-            elif msg and not title:
-                txt = "{}".format(msg)
-            elif msg and title:
-                txt = "{}: {}".format(title, msg)
             print(txt)
 
         if bell:
-            # curses.beep()
             print("\a")
+
         if write_file:
+            # open file in append mode
             with open('/tmp/zikdrum.log', 'a') as fh:
                 # _logfile.write("{}:\ {}\n".format(title, msg))
-                txt = ""
-                if title and not msg:
-                    txt = "{}:".format(title)
-                elif msg and not title:
-                    txt = "{}".format(msg)
-                elif title and msg:
-                    txt = "{}:\n{}".format(title, msg)
-
                 print(txt, file=fh) 
 
                 if endline:
@@ -907,9 +897,9 @@ class MidiPlayer(object):
         
         # print(f"curtime before: {curtime:.3f}, play_pos: {play_pos}")
         
-        debug("")
+        debug("Enter in _midi_callback func", "MidiPlayer Info", write_file=True)
         while self._playing and _is_running():
-            # debug("In Loop")
+            debug("\nFunc _midi_callback, In Loop", write_file=True)
             # First, Getting the relatif position timing in msec when playing
             ### Note: its depend for tick2sec function, sec_per_tick, sec_per_beat, and tempo variable
             curtime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
@@ -952,18 +942,24 @@ class MidiPlayer(object):
                 if not msg_timing and not msg_pending:
                     finishing =1
                     if not _deq_data: # convert collections container to boolean
+                        debug(f"No data in the buffer, at next_pos: {next_pos}", write_file=True)
                         if play_pos >= next_pos:
+                            debug(f"Before retrieve data, next_pos: {next_pos}", write_file=True)
                             # play_pos = _sec2tick(curtime)
                             _deq_data.extend( _get_playable_data(next_pos) )
                             # debug(f"voici next_pos: {next_pos}")
+                            prev_pos = next_pos
+                            debug(f"After retrieve data, next_pos: {next_pos}", write_file=True)
                             next_pos = _timeline.next_ev_time()
+                            debug(f"After forward timeline, next_pos: {next_pos}", write_file=True)
                             if not _deq_data:
-                                # debug("je suis ici")
                                 _count += 1
+                                debug(f"No data in the buffer, At prev_pos: {prev_pos}, _count: {_count}", write_file=True)
                             if _deq_data:
                                 msg_pending =1
                                 finishing =0
-                                if _count: debug(f"Total Count: {_count}, with next_pos: {next_pos}")
+                                if _count: 
+                                    debug(f"There is data in the buffer, Total Count: {_count}, with next_pos: {next_pos}", write_file=True)
                                 _count =0
 
                     else: # the buffer data can be saved
@@ -1004,7 +1000,7 @@ class MidiPlayer(object):
             # click part
             if not self.click_track.is_active():
                 finishing =1
-            else:
+            else: # click track is active
                 finishing =0
                 if not click_timing and not click_pending:
                     if not click_lst:
