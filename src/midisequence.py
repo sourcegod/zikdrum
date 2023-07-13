@@ -8,7 +8,7 @@
     Author: Coolbrother
 """
 import time
-import itertools
+import itertools as itt
 import mido
 import miditools as midto
 import constants as cst
@@ -325,6 +325,9 @@ class MidiTrack(MidiChannel):
         self.group_lst = []
         self.group_index =0
         self.ev_grouping =0
+        self.group_pos_time_lst = [] # list of tuple of uniq index and time for the event
+        self.group_time_index =0
+
         self.active =0
         self.pos =0
         self.lastpos =-1
@@ -645,8 +648,17 @@ class MidiTrack(MidiChannel):
         from MidiTrack object
         """
 
-        curtime =-1
         self.group_lst = []
+        
+        """
+        # Note: cannot use the fastest way:
+        # lst = sorted(set(ev_lst), key=lambda x: x.msg.time)
+        # Cause set do not accept complex object,
+        # But only simple object as: integer, string ...
+        """
+
+        
+        curtime =-1
         for (pos, ev) in enumerate(self.ev_lst):
             time = ev.msg.time
             if time != curtime:
@@ -656,6 +668,26 @@ class MidiTrack(MidiChannel):
         return self.group_lst
     
     #-----------------------------------------
+
+    def gen_group_pos_time(self):
+        """
+        Note: Not used yet
+        Generate a list of unique index and time of each group event
+        from MidiTrack object
+        """
+
+        curtime =-1
+        for (pos, ev) in enumerate(self.ev_lst):
+            evtime = ev.msg.time
+            if evtime != curtime:
+                self.group_pos_time_lst.append((pos, evtime))
+                curtime = evtime
+ 
+      
+        return self.group_pos_time_lst
+    
+    #-----------------------------------------
+
 
     def get_group_pos(self):
         """
@@ -831,7 +863,6 @@ class MidiTrack(MidiChannel):
         self.group_index = self.pos
 
     #-----------------------------------------
-
 
     def sort(self):
         """
@@ -1903,29 +1934,31 @@ class MidiSequence(object):
         tim.clear()
         total_count =0
         for track in self.track_lst:
-            ev_lst = track.ev_lst
-            curtime =-1
-            for ev in ev_lst:
-                ev_time = ev.msg.time
-                if ev_time != curtime:
-                    tim.append(ev)
-                    curtime = ev_time
-                total_count +=1
-        # sorting the timeline and make uniq item
-        ev_lst = tim.ev_lst
+            tim.add_evs(*track.ev_lst)
+            total_count += track.count()
+        
+        # sorting the timeline in place
+        tim.sort()
+        
+        # Cannot make uniq item in the event list, cause groupby function not work with complex object for consecutive item
         # tim.ev_lst = list(k for k, _ in itertools.groupby(sorted(ev_lst, key=lambda x: x.msg.time)))
         tim.set_pos(0)
 
-        # Not necessary
+        # Keeping index of grouping event
         # generate group position for the timeline
-        # tim.gen_group_pos()
+        tim.gen_group_pos()
+        # Or generate tuple of uniq index and time for group event
+        tim.gen_group_pos_time()
         count = tim.count()
         if count:
             first_tick = tim.ev_lst[0].msg.time
             last_tick = tim.ev_lst[-1].msg.time
             debug(f"Timeline count: {count}, / total_count: {total_count}, first_tick: {first_tick}, last_tick: {last_tick}", write_file=True)
+        # Show the results
         ev_lst = tim.get_list()
         for i, ev in enumerate(ev_lst): debug(f"{i}: tick {ev.msg.time}", write_file=True)
+        debug(f"Group Event Position time count: {len(tim.group_pos_time_lst)}", write_file=True)
+        for (i, item) in enumerate(tim.group_pos_time_lst): debug(f"index Group: {i}, Pos: {item[0]}, Tick: {item[1]}", write_file=True)
 
     #-----------------------------------------
 
