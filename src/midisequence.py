@@ -1899,6 +1899,7 @@ class MidiSequence(object):
         
         tim = self._timeline
         # filtering events with uniq time
+        debug("Func: gen_timeline, Initialize Timeline", "\nMidiSequence Info", write_file=True)
         tim.clear()
         total_count =0
         for track in self.track_lst:
@@ -1912,7 +1913,7 @@ class MidiSequence(object):
                 total_count +=1
         # sorting the timeline and make uniq item
         ev_lst = tim.ev_lst
-        tim.ev_lst = list(k for k, _ in itertools.groupby(sorted(ev_lst, key=lambda x: x.msg.time)))
+        # tim.ev_lst = list(k for k, _ in itertools.groupby(sorted(ev_lst, key=lambda x: x.msg.time)))
         tim.set_pos(0)
 
         # Not necessary
@@ -1922,7 +1923,9 @@ class MidiSequence(object):
         if count:
             first_tick = tim.ev_lst[0].msg.time
             last_tick = tim.ev_lst[-1].msg.time
-            debug(f"Timeline count: {count}, / total_count: {total_count}, first_tick: {first_tick}, last_tick: {last_tick}")
+            debug(f"Timeline count: {count}, / total_count: {total_count}, first_tick: {first_tick}, last_tick: {last_tick}", write_file=True)
+        ev_lst = tim.get_list()
+        for i, ev in enumerate(ev_lst): debug(f"{i}: tick {ev.msg.time}", write_file=True)
 
     #-----------------------------------------
 
@@ -3361,7 +3364,7 @@ class MidiSequence(object):
             else: 
                 debug(f"Len ev_lst: {len(ev_lst)},  at curtick: {curtick}, on tracknum {tracknum}", write_file=True)
             for ev in ev_lst:
-                debug(f"msg type: {ev.msg.type}, {ev.msg}", write_file=True)
+                debug(f"msg: {ev.msg}", write_file=True)
                 if ev.msg.type == "set_tempo":
                     new_tempo = ev.msg.tempo
                     if self.base.tempo != new_tempo:

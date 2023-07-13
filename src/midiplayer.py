@@ -894,12 +894,15 @@ class MidiPlayer(object):
         curtime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
         play_pos = _sec2tick(curtime) # in tick
         next_pos =0
+        loop_count =0
         
         # print(f"curtime before: {curtime:.3f}, play_pos: {play_pos}")
         
-        debug("Enter in _midi_callback func", "MidiPlayer Info", write_file=True)
+        debug("\nFunc: Enter in _midi_callback", "MidiPlayer Info", write_file=True)
+        ev_lst = _timeline.get_list()[:10]
+        for i, ev in enumerate(ev_lst): debug(f"{i}: tick {ev.msg.time}", write_file=True)
         while self._playing and _is_running():
-            debug("\nFunc _midi_callback, In Loop", write_file=True)
+            # debug("\nIn loop: _midi_callback", write_file=True)
             # First, Getting the relatif position timing in msec when playing
             ### Note: its depend for tick2sec function, sec_per_tick, sec_per_beat, and tempo variable
             curtime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
@@ -942,8 +945,10 @@ class MidiPlayer(object):
                 if not msg_timing and not msg_pending:
                     finishing =1
                     if not _deq_data: # convert collections container to boolean
-                        debug(f"No data in the buffer, at next_pos: {next_pos}", write_file=True)
+                        # debug(f"No data in the buffer, at next_pos: {next_pos}", write_file=True)
                         if play_pos >= next_pos:
+                            debug(f"\nAt loop_count: {loop_count}", write_file=True)
+                            debug(f"No data in the buffer, at curtime: {curtime:.3f}, next_pos: {next_pos}", write_file=True)
                             debug(f"Before retrieve data, next_pos: {next_pos}", write_file=True)
                             # play_pos = _sec2tick(curtime)
                             _deq_data.extend( _get_playable_data(next_pos) )
@@ -1036,6 +1041,7 @@ class MidiPlayer(object):
                         click_timing =1
                         # maybe there is an ev in the list, cause not yet poped
                         click_pending =1
+            loop_count +=1
             # time.sleep(0.001)
 
         curtime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
