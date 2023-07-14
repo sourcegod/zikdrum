@@ -13,29 +13,25 @@ import mido
 import miditools as midto
 import constants as cst
 
-DEBUG =1
-_logfile = None
+DEBUG =0
+_LOGFILE = "/tmp/zikdrum.log"
+_BELL =1
 
 def debug(msg="", title="", bell=True, write_file=False, stdout=True, endline=False):
+    if not DEBUG: return
     txt = ""
-    if DEBUG:
-        if title: txt = f"{title}: "
-        if msg: txt += f"{msg}"
-        
-        if stdout:
-            print(txt)
+    if title: txt = f"{title}: "
+    if msg: txt += f"{msg}"
+    
+    if stdout: print(txt)
+    if _BELL and bell: print("\a")
 
-        if bell:
-            print("\a")
-
-        if write_file:
-            # open file in append mode
-            with open('/tmp/zikdrum.log', 'a') as fh:
-                # _logfile.write("{}:\ {}\n".format(title, msg))
-                print(txt, file=fh) 
-
-                if endline:
-                    print("", file=fh)
+    if write_file:
+        # open file in append mode
+        with open(_LOGFILE, 'a') as fh:
+            # _logfile.write("{}:\ {}\n".format(title, msg))
+            print(txt, file=fh) 
+            if endline: print("", file=fh)
 
 #------------------------------------------------------------------------------
 
@@ -325,8 +321,9 @@ class MidiTrack(MidiChannel):
         self.group_lst = []
         self.group_index =0
         self.ev_grouping =0
-        self.group_pos_time_lst = [] # list of tuple of uniq index and time for the event
+        self.group_time_lst = [] # list of tuple of uniq index and time for the event
         self.group_time_index =0
+        self.time_grouping =0
 
         self.active =0
         self.pos =0
@@ -361,7 +358,7 @@ class MidiTrack(MidiChannel):
         from Miditrack object
         """
         
-        self.ev_lst = []
+        self.ev_lst[:] = []
 
     #-----------------------------------------
 
@@ -669,26 +666,6 @@ class MidiTrack(MidiChannel):
     
     #-----------------------------------------
 
-    def gen_group_pos_time(self):
-        """
-        Note: Not used yet
-        Generate a list of unique index and time of each group event
-        from MidiTrack object
-        """
-
-        curtime =-1
-        for (pos, ev) in enumerate(self.ev_lst):
-            evtime = ev.msg.time
-            if evtime != curtime:
-                self.group_pos_time_lst.append((pos, evtime))
-                curtime = evtime
- 
-      
-        return self.group_pos_time_lst
-    
-    #-----------------------------------------
-
-
     def get_group_pos(self):
         """
         returns ev group index
@@ -864,6 +841,172 @@ class MidiTrack(MidiChannel):
 
     #-----------------------------------------
 
+    def gen_group_time(self):
+        """
+        Note: Not used yet
+        Generate a list of unique index and time of each group event
+        from MidiTrack object
+        """
+
+        # Note: dont forget to reinitialize the group list
+        self.group_time_lst = []
+        self.group_time_index =0
+        curtime =-1
+        for (pos, ev) in enumerate(self.ev_lst):
+            evtime = ev.msg.time
+            if evtime != curtime:
+                self.group_time_lst.append((pos, evtime))
+                curtime = evtime
+ 
+      
+        return self.group_time_lst
+    
+    #-----------------------------------------
+
+    def get_group_time(self):
+        """
+        returns current group_time from group_time_index
+        from MidiTrack object
+        """
+        
+        ret =-1
+        try:
+            ret = self.group_time_lst[self.group_time_index]
+        except IndexError:
+            pass
+
+        return ret
+    
+    #-----------------------------------------
+
+    def set_group_time(self, pos):
+        """
+        sets the index in the group_time list position
+        from MidiTrack object
+        """
+
+        index =-1
+        curpos =-1
+        # group_time_lst contain a tuple index and time of each group event
+        if not self.group_time_lst: return
+        last_pos = self.group_time_lst[-1][0]
+        if pos >= last_pos:
+            index = last_pos
+        else:
+            for (ind, group_pos) in enumerate(self.group_time_lst):
+                if group_pos[pos] == pos:
+                    index = ind
+                    break
+                elif group_pos[0] > pos:
+                    index = ind -1
+                    break
+
+        if index >= 0:
+            try:
+                curpos = self.group_time_lst[index][0]
+                self.group_time_index = index
+            except IndexError:
+                pass
+
+        return curpos
+    
+    #-----------------------------------------
+ 
+    def get_prev_group_time(self):
+        """
+        Returns prev pos and time  without changing position in the group_time list
+        from MidiTrack object
+        """
+
+        ret = None
+        pos = self.group_time_index
+        if pos >0:
+            pos -=1
+            try:
+                ret = self.group_time_lst[pos]
+            except IndexError:
+                pass
+
+        return ret
+
+    #-----------------------------------------
+
+    def prev_group_time(self):
+        """
+        set prev event
+        from MTrack object
+        """
+
+        ret = None
+        if self.group_time_index >0:
+            self.group_time_index -=1
+            try:
+                ret = self.group_time_lst[self.group_time_index]
+            except IndexError:
+                pass
+
+        return ret
+
+    #-----------------------------------------
+
+    def get_next_group_time(self):
+        """
+        Returns next pgroup pos and time without changing position in group_time  list
+        from MidiTrack object
+        """
+
+        ret = None
+        pos = self.group_time_index
+        if pos < len(self.group_time_lst):
+            pos +=1
+            try:
+                ret = self.group_time_lst[pos]
+            except IndexError:
+                pass
+        elif pos >= len(self.group_time_lst):
+            if self.repeating:
+                pos =0
+                try:
+                    ret = self.group_time_lst[pos]
+                    # debug("repeat count: {}".format(self.repeat_count))
+                except IndexError:
+                    pass
+            else: # no repeating
+                pass
+        
+        return ret
+
+    #-----------------------------------------
+
+    def next_group_time(self):
+        """
+        Sets next group pos and time 
+        from MidiTrack object
+        """
+
+        ret = None
+        if self.group_time_index < len(self.group_time_lst):
+            self.group_time_index +=1
+            try:
+                ret = self.group_time_lst[self.group_time_index]
+            except IndexError:
+                pass
+        elif self.group_time_index >= len(self.group_time_lst):
+            if self.repeating:
+                self.group_time_index =0
+                self.repeat_count +=1
+                try:
+                    ret = self.group_time_lst[self.group_time_index]
+                    # debug("repeat count: {}".format(self.repeat_count))
+                except IndexError:
+                    pass
+            else:
+                self.group_time_index = len(self.group_time_lst)
+
+        return ret
+
+    #-----------------------------------------
+    
     def sort(self):
         """
         sort events list
@@ -897,7 +1040,10 @@ class MidiTrack(MidiChannel):
             # update event group position
             if self.ev_grouping:
                 self.update_group_pos(0)
+            if self.time_grouping:
+                self.update_group_time(0)
     
+ 
     #-----------------------------------------
 
     def update_track_pos(self, pos=-1):
@@ -923,6 +1069,18 @@ class MidiTrack(MidiChannel):
         self.ev_grouping = grouping
     
     #-----------------------------------------
+
+    def update_group_time(self, grouping=0):
+        """
+        update time group index
+        from MidiTrack object
+        """
+
+        self.set_group_time(self.group_time_index)    
+        self.time_grouping = grouping
+    
+    #-----------------------------------------
+
 
     def search_pos(self, time):
         """
@@ -1930,10 +2088,13 @@ class MidiSequence(object):
         
         tim = self._timeline
         # filtering events with uniq time
-        debug("Func: gen_timeline, Initialize Timeline", "\nMidiSequence Info", write_file=True)
+        debug("\nFunc: gen_timeline, Initializing Timeline", "\nMidiSequence Info", write_file=True)
         tim.clear()
+        file_name = self.base.file_name
+        debug(f"File_name: {file_name}", write_file=True)
         total_count =0
         for track in self.track_lst:
+            # tim.ev_lst.extend(track.ev_lst)
             tim.add_evs(*track.ev_lst)
             total_count += track.count()
         
@@ -1948,17 +2109,19 @@ class MidiSequence(object):
         # generate group position for the timeline
         tim.gen_group_pos()
         # Or generate tuple of uniq index and time for group event
-        tim.gen_group_pos_time()
+        tim.gen_group_time()
         count = tim.count()
         if count:
             first_tick = tim.ev_lst[0].msg.time
             last_tick = tim.ev_lst[-1].msg.time
             debug(f"Timeline count: {count}, / total_count: {total_count}, first_tick: {first_tick}, last_tick: {last_tick}", write_file=True)
         # Show the results
+        nb_ev = 100
+        debug(f"First items in timeline in ev_lst", write_file=True)
         ev_lst = tim.get_list()
-        for i, ev in enumerate(ev_lst): debug(f"{i}: tick {ev.msg.time}", write_file=True)
-        debug(f"Group Event Position time count: {len(tim.group_pos_time_lst)}", write_file=True)
-        for (i, item) in enumerate(tim.group_pos_time_lst): debug(f"index Group: {i}, Pos: {item[0]}, Tick: {item[1]}", write_file=True)
+        for i, ev in enumerate(ev_lst): debug(f"{i}, tick: {ev.msg.time}, tracknum: {ev.tracknum}", write_file=True)
+        debug(f"\nGroup Event Position time count: {len(tim.group_time_lst)}", write_file=True)
+        for (i, item) in enumerate(tim.group_time_lst[:nb_ev]): debug(f"index Group: {i}, Pos: {item[0]}, Tick: {item[1]}", write_file=True)
 
     #-----------------------------------------
 

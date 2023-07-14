@@ -13,29 +13,25 @@ import midisched as midsch
 from collections import deque
 
 
-DEBUG =1
-_logfile = None
+DEBUG =0
+_LOGFILE = "/tmp/zikdrum.log"
+_BELL =1
 
 def debug(msg="", title="", bell=True, write_file=False, stdout=True, endline=False):
+    if not DEBUG: return
     txt = ""
-    if DEBUG:
-        if title: txt = f"{title}: "
-        if msg: txt += f"{msg}"
-        
-        if stdout:
-            print(txt)
+    if title: txt = f"{title}: "
+    if msg: txt += f"{msg}"
+    
+    if stdout: print(txt)
+    if _BELL and bell: print("\a")
 
-        if bell:
-            print("\a")
-
-        if write_file:
-            # open file in append mode
-            with open('/tmp/zikdrum.log', 'a') as fh:
-                # _logfile.write("{}:\ {}\n".format(title, msg))
-                print(txt, file=fh) 
-
-                if endline:
-                    print("", file=fh)
+    if write_file:
+        # open file in append mode
+        with open(_LOGFILE, 'a') as fh:
+            # _logfile.write("{}:\ {}\n".format(title, msg))
+            print(txt, file=fh) 
+            if endline: print("", file=fh)
 
 #------------------------------------------------------------------------------
 
@@ -899,8 +895,6 @@ class MidiPlayer(object):
         # print(f"curtime before: {curtime:.3f}, play_pos: {play_pos}")
         
         debug("\nFunc: Enter in _midi_callback", "MidiPlayer Info", write_file=True)
-        ev_lst = _timeline.get_list()[:10]
-        for i, ev in enumerate(ev_lst): debug(f"{i}: tick {ev.msg.time}", write_file=True)
         while self._playing and _is_running():
             # debug("\nIn loop: _midi_callback", write_file=True)
             # First, Getting the relatif position timing in msec when playing
@@ -955,7 +949,8 @@ class MidiPlayer(object):
                             # debug(f"voici next_pos: {next_pos}")
                             prev_pos = next_pos
                             debug(f"After retrieve data, next_pos: {next_pos}", write_file=True)
-                            next_pos = _timeline.next_ev_time()
+                            (_, next_pos) = _timeline.next_group_time()
+                            # next_pos = _timeline.next_ev_time()
                             debug(f"After forward timeline, next_pos: {next_pos}", write_file=True)
                             if not _deq_data:
                                 _count += 1
