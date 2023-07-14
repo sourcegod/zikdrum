@@ -13,12 +13,12 @@ import midisched as midsch
 from collections import deque
 
 
-DEBUG =0
+_DEBUG =0
 _LOGFILE = "/tmp/zikdrum.log"
 _BELL =1
 
 def debug(msg="", title="", bell=True, write_file=False, stdout=True, endline=False):
-    if not DEBUG: return
+    if not _DEBUG: return
     txt = ""
     if title: txt = f"{title}: "
     if msg: txt += f"{msg}"
@@ -887,9 +887,11 @@ class MidiPlayer(object):
         seq_len = self.get_length()
         self.start_time = time.time() # self.init_time()
         _count =0
-        curtime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
-        play_pos = _sec2tick(curtime) # in tick
-        next_pos =0
+        # curtime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
+        curtime =0
+        curtick =0
+        next_tick =0
+        next_time =0
         loop_count =0
         
         # print(f"curtime before: {curtime:.3f}, play_pos: {play_pos}")
@@ -901,102 +903,69 @@ class MidiPlayer(object):
             ### Note: its depend for tick2sec function, sec_per_tick, sec_per_beat, and tempo variable
             curtime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
             # Convert this position in tick to get midi events
-            play_pos = _sec2tick(curtime) # in tick
+            # curtick = _sec2tick(curtime) # in tick
             seq_pos = self.get_position() # in tick
             seq_len = self.get_length() # in tick
-            # self.set_play_pos(play_pos)
+            # self.set_play_pos(curtick)
             # print(f"curtime: {self.curtime:.3f}, curtick: {self.playpos}, seq_pos: {seq_pos}")
-            if not self._playing:
-                finishing =1
-            else: # playing
-                finishing =0
+            if self._playing: # playing
                 if self._recording:
-                    self.set_play_pos(play_pos)
+                    self.set_play_pos(curtick)
                 else: # not recording
-                    if self.curseq.looping:
-                        if seq_len >0:
-                            self.set_play_pos(play_pos)
-                    else: # not looping
-                        # manage player position in time without changing tracks position
-                        if seq_pos < seq_len:
-                            self.set_play_pos(play_pos)
-                 
-                # whether is looping
-                if self.curseq.loop_manager():
-                    self.start_time = time.time() # self.init_clock()
-                    # self._player.check_rec_data()
-                    msg_ev = None
-                    msg_timing =0
-                    msg_pending =0
-                    _deq_data.clear()
-                    # click part
-                    click_ev = None
-                    click_pending =0
-                    click_timing =0
-                    click_lst = []
-                
-                # Getting msg from data list
-                if not msg_timing and not msg_pending:
-                    finishing =1
-                    if not _deq_data: # convert collections container to boolean
-                        # debug(f"No data in the buffer, at next_pos: {next_pos}", write_file=True)
-                        if play_pos >= next_pos:
-                            debug(f"\nAt loop_count: {loop_count}", write_file=True)
-                            debug(f"No data in the buffer, at curtime: {curtime:.3f}, next_pos: {next_pos}", write_file=True)
-                            debug(f"Before retrieve data, next_pos: {next_pos}", write_file=True)
-                            # play_pos = _sec2tick(curtime)
-                            _deq_data.extend( _get_playable_data(next_pos) )
-                            # debug(f"voici next_pos: {next_pos}")
-                            prev_pos = next_pos
-                            debug(f"After retrieve data, next_pos: {next_pos}", write_file=True)
-                            (_, next_pos) = _timeline.next_group_time()
-                            # next_pos = _timeline.next_ev_time()
-                            debug(f"After forward timeline, next_pos: {next_pos}", write_file=True)
-                            if not _deq_data:
-                                _count += 1
-                                debug(f"No data in the buffer, At prev_pos: {prev_pos}, _count: {_count}", write_file=True)
-                            if _deq_data:
-                                msg_pending =1
-                                finishing =0
-                                if _count: 
-                                    debug(f"There is data in the buffer, Total Count: {_count}, with next_pos: {next_pos}", write_file=True)
-                                _count =0
+                    pass
 
-                    else: # the buffer data can be saved
+                # Whether is looping
+                if self.curseq.looping:
+                    curtick = _sec2tick(curtime)
+                    self.set_play_pos(curtick)
+                else: # not looping
+                    pass
+                    
+                    """
+                    # manage player position in time without changing tracks position
+                    if seq_pos < seq_len:
+                        self.set_play_pos(curtick)
+                    """
+             
+               
+                # Getting msg from data list
+                if not _deq_data: # convert collections container to boolean
+                    # debug(f"No data in the buffer, at next_tick: {next_tick}", write_file=True)
+                    debug(f"\nAt loop_count: {loop_count}", write_file=True)
+                    debug(f"No data in the buffer, at curtime: {curtime:.3f}, next_tick: {next_tick}", write_file=True)
+                    debug(f"Before retrieve data, next_tick: {next_tick}", write_file=True)
+                    # play_pos = _sec2tick(curtime)
+                    _deq_data.extend( _get_playable_data(next_tick) )
+                    # debug(f"voici next_tick: {next_tick}")
+                    prev_tick = next_tick
+                    debug(f"After retrieve data, next_tick: {next_tick}", write_file=True)
+                    next_tick = _timeline.next_ev_time()
+                    next_time = _tick2sec(next_tick)
+                    debug(f"After forward timeline, next_tick: {next_tick}", write_file=True)
+                    if not _deq_data:
+                        _count += 1
+                        debug(f"No data in the buffer, At prev_tick: {prev_tick}, _count: {_count}", write_file=True)
+                    if _deq_data:
                         msg_pending =1
                         finishing =0
-               
+                        if _count: 
+                            debug(f"There is data in the buffer, Total Count: {_count}, with next_tick: {next_tick}", write_file=True)
+                        _count =0
+
+          
                 # Getting msg_ev part
+                """
                 if msg_ev is None and msg_pending and _deq_data:
                     msg_ev = _deq_data[0]
                     msg_timing =1
                     # there is data in the list
                     msg_pending =1
                     # debug("count_msg: {}".format(count))
+                """
                 
               
-                # Sending msg_ev
-                if msg_ev:
-                    # send ev
-                    tracknum = msg_ev.tracknum
-                    track = self.curseq.get_track(tracknum)
-                    if not track.muted and not track.sysmuted:
-                        # Todo: changing channel and patch message dynamically or statically
-                        
-                        # dont modify drum track
-                        if tracknum != 0:
-                            # only for recording   ???
-                            # changing channel dynamically: during playback
-                            msg_ev.msg.channel = track.channel_num
-                        
-                        self.midi_man.send_imm(msg_ev.msg)
-                    # delete msg in the buffer after sending
-                    if _deq_data: _deq_data.popleft()
-                    msg_ev = None
-                    msg_timing =0
-                    if not _deq_data:
-                        msg_pending =0                
-                
+               
+            """
             # click part
             if not self.click_track.is_active():
                 finishing =1
@@ -1036,15 +1005,44 @@ class MidiPlayer(object):
                         click_timing =1
                         # maybe there is an ev in the list, cause not yet poped
                         click_pending =1
+
+            """
+
+            # Drain out the queue
+            if curtime >= next_time: 
+                """
+                # Note: FIXME, Can be managed before queuing
+                tracknum = msg_ev.tracknum
+                track = self.curseq.get_track(tracknum)
+                if not track.muted and not track.sysmuted:
+                    # Todo: changing channel and patch message dynamically or statically
+                    
+                    # dont modify drum track
+                    if tracknum != 0:
+                        # only for recording   ???
+                        # changing channel dynamically: during playback
+                        msg_ev.msg.channel = track.channel_num
+                """
+                
+                # Sending ev
+                while _deq_data:
+                    msg_ev = _deq_data.popleft()
+                    self.midi_man.send_imm(msg_ev.msg)
+                # delete msg in the buffer after sending
+                # if _deq_data: _deq_data.popleft()
+                msg_ev = None
+                msg_timing =0
+                msg_pending =0                
+
             loop_count +=1
             # time.sleep(0.001)
 
-        curtime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
-        # Convert this position in tick to get midi events
-        play_pos = _sec2tick(curtime) # in tick
-        # self.set_position(play_pos)
-        # print(f"curtime after: {curtime:.3f}, play_pos: {play_pos}")
-
+        # Out of loop
+        # Saving the curtime position
+        # curtime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
+        curtick = _sec2tick(curtime) # in tick
+        self.set_position(curtick)
+        # print(f"curtime after: {curtime:.3f}, curtick: {curtick}")
 
     #-----------------------------------------
    

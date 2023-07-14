@@ -13,12 +13,12 @@ import mido
 import miditools as midto
 import constants as cst
 
-DEBUG =0
+_DEBUG =0
 _LOGFILE = "/tmp/zikdrum.log"
 _BELL =1
 
 def debug(msg="", title="", bell=True, write_file=False, stdout=True, endline=False):
-    if not DEBUG: return
+    if not _DEBUG: return
     txt = ""
     if title: txt = f"{title}: "
     if msg: txt += f"{msg}"
@@ -1017,6 +1017,26 @@ class MidiTrack(MidiChannel):
 
     #-----------------------------------------
 
+    def sort_uniq_evs(self):
+        """
+        Note: Not ideal but ...
+        Sorting event list and uniq it by time
+        from MidiTrack object
+        """
+
+        lst = []
+        curtime =-1
+        self.ev_lst.sort(key=lambda x: x.msg.time)
+        # Note: FIXME, Deleting the doublon by time, not ideal but...
+        for ev in self.ev_lst:
+            evtime = ev.msg.time
+            if evtime != curtime:
+                lst.append(ev)
+                curtime = evtime
+        self.ev_lst = lst
+
+    #-----------------------------------------
+     
     def get_pos(self):
         """
         returns position in event list
@@ -2086,6 +2106,8 @@ class MidiSequence(object):
         from MidiSequence object
         """
         
+        global _DEBUG
+        _DEBUG =1
         tim = self._timeline
         # filtering events with uniq time
         debug("\nFunc: gen_timeline, Initializing Timeline", "\nMidiSequence Info", write_file=True)
@@ -2093,16 +2115,26 @@ class MidiSequence(object):
         file_name = self.base.file_name
         debug(f"File_name: {file_name}", write_file=True)
         total_count =0
+
         for track in self.track_lst:
-            # tim.ev_lst.extend(track.ev_lst)
-            tim.add_evs(*track.ev_lst)
-            total_count += track.count()
+            curtime =-1
+            for ev in track.ev_lst:
+                evtime = ev.msg.time
+                if evtime != curtime:
+                    tim.ev_lst.append(ev)
+                    curtime = evtime
+                    total_count +=1
+ 
+  
+            # tim.add_evs(*track.ev_lst)
+            # total_count += track.count()
         
         # sorting the timeline in place
-        tim.sort()
+        # tim.sort()
+        tim.sort_uniq_evs()
         
         # Cannot make uniq item in the event list, cause groupby function not work with complex object for consecutive item
-        # tim.ev_lst = list(k for k, _ in itertools.groupby(sorted(ev_lst, key=lambda x: x.msg.time)))
+        # tim.ev_lst = list(k for k, _ in itt.groupby(sorted(tim.ev_lst, key=lambda x: x.msg.time)))
         tim.set_pos(0)
 
         # Keeping index of grouping event
@@ -2117,11 +2149,12 @@ class MidiSequence(object):
             debug(f"Timeline count: {count}, / total_count: {total_count}, first_tick: {first_tick}, last_tick: {last_tick}", write_file=True)
         # Show the results
         nb_ev = 100
-        debug(f"First items in timeline in ev_lst", write_file=True)
+        debug(f"First {nb_ev} items in timeline in ev_lst", write_file=True)
         ev_lst = tim.get_list()
-        for i, ev in enumerate(ev_lst): debug(f"{i}, tick: {ev.msg.time}, tracknum: {ev.tracknum}", write_file=True)
+        for i, ev in enumerate(ev_lst[:nb_ev]): debug(f"{i}, tick: {ev.msg.time}, tracknum: {ev.tracknum}", write_file=True)
         debug(f"\nGroup Event Position time count: {len(tim.group_time_lst)}", write_file=True)
         for (i, item) in enumerate(tim.group_time_lst[:nb_ev]): debug(f"index Group: {i}, Pos: {item[0]}, Tick: {item[1]}", write_file=True)
+        _DEBUG =0
 
     #-----------------------------------------
 
