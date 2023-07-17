@@ -11,13 +11,14 @@ import miditools as midto
 import midisequence as midseq
 import midisched as midsch
 from collections import deque
-
+import logger as log
+log.set_level(log._DEBUG)
 
 _DEBUG =0
 _LOGFILE = "/tmp/zikdrum.log"
 _BELL =1
 
-def debug(msg="", title="", bell=True, write_file=False, stdout=True, endline=False):
+def debug(msg="", title="", bell=True, writing_file=False, stdout=True, endline=False):
     if not _DEBUG: return
     txt = ""
     if title: txt = f"{title}: "
@@ -26,7 +27,7 @@ def debug(msg="", title="", bell=True, write_file=False, stdout=True, endline=Fa
     if stdout: print(txt)
     if _BELL and bell: print("\a")
 
-    if write_file:
+    if writing_file:
         # open file in append mode
         with open(_LOGFILE, 'a') as fh:
             # _logfile.write("{}:\ {}\n".format(title, msg))
@@ -239,7 +240,7 @@ class MidiPlayer(object):
         self.midi_man.panic()
         self.check_rec_data()
         self.set_position(0)
-        debug()
+        log.debug()
 
     #-----------------------------------------
     
@@ -308,7 +309,7 @@ class MidiPlayer(object):
         
         if self.curseq is None: return 0
         # position in trackline is in time
-        # debug("voici len player : {} ".format(val))
+        # log.debug("voici len player : {} ".format(val))
         return self.curseq.get_length()
 
     #-----------------------------------------
@@ -545,7 +546,7 @@ class MidiPlayer(object):
         if self.incoming:
             self.end_rectime = (time.time() - self.first_rectime) 
             self.end_recpos = self.sec2tick(self.end_rectime) + self.start_recpos
-            # debug("voici start_recpos: {}, end_recpos: {}".format(self.start_recpos, self.end_recpos))
+            # log.debug("voici start_recpos: {}, end_recpos: {}".format(self.start_recpos, self.end_recpos))
             # regenerate midi time set
             # tracknum = self._tracks_arm[0]
             # tracknum = self._tracks_arm[0]
@@ -554,15 +555,15 @@ class MidiPlayer(object):
             rec_track = self.get_track()
             ev_lst = rec_track.get_list()
             if self.rec_mode == 1: # replace mode
-                # debug("voici list: {}".format(msg_lst))
+                # log.debug("voici list: {}".format(msg_lst))
                 for (i, ev)  in enumerate(ev_lst):
-                    # debug("msg_time: {}".format(msg.time))
+                    # log.debug("msg_time: {}".format(msg.time))
                     msg = ev.msg
                     if msg.time >= self.start_recpos and msg.time <= self.end_recpos:
                         del ev_lst[i]
-                        # debug("voici : {}".format(i))
+                        # log.debug("voici : {}".format(i))
             val = len(self.rec_lst)
-            # debug("len rec_lst: {}".format(val))
+            # log.debug("len rec_lst: {}".format(val))
             # quantize rec_lst for incoming messages
             if self.quantizing:
                 self.quantize_track(type=1)
@@ -598,7 +599,7 @@ class MidiPlayer(object):
             self.arrange_rec_data()
         if self.rec_waiting:
             self.gen_trackline()
-            # debug("je suis la")
+            # log.debug("je suis la")
 
     #-----------------------------------------
  
@@ -740,9 +741,9 @@ class MidiPlayer(object):
         # start_time = time.time() # self.init_clock()
         self.start_time = time.time() # self.init_time()
 
-        debug("")
+        log.debug("")
         while self._playing and _is_running():
-            # debug("In Loop")
+            # log.debug("In Loop")
             # get timing in msec
             ### Note: its depend for tick2sec function, sec_per_tick, sec_per_beat, and tempo variable
             curtime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
@@ -787,7 +788,7 @@ class MidiPlayer(object):
                         self.playpos = self.curseq.base.sec2tick(curtime)
                         # self._base.update_tempo_params()
                         self.msg_lst = self.curseq.get_playable_data(self.playpos)
-                        # debug("voici playpos: {}".format(self.playpos))
+                        # log.debug("voici playpos: {}".format(self.playpos))
                         if self.msg_lst:
                             msg_pending =1
                             finishing =0
@@ -802,7 +803,7 @@ class MidiPlayer(object):
                     msg_timing =1
                     # there is data in the list
                     msg_pending =1
-                    # debug("count_msg: {}".format(count))
+                    # log.debug("count_msg: {}".format(count))
                 
               
                 # msg part
@@ -910,10 +911,10 @@ class MidiPlayer(object):
         last_time = self.last_time 
         loop_count =0
         
-        debug("\nFunc: Enter in _midi_callback", "MidiPlayer Info", write_file=True)
-        debug(f"\nBefore the loop, curtick: {curtick}, next_tick: {next_tick}, last_time: {last_time:.3f}", write_file=True)
+        log.debug("\nFunc: Enter in _midi_callback", "MidiPlayer Info")
+        log.debug(f"\nBefore the loop, curtick: {curtick}, next_tick: {next_tick}, last_time: {last_time:.3f}")
         while self._playing and _is_running():
-            # debug("\nIn loop: _midi_callback", write_file=True)
+            # log.debug("\nIn loop: _midi_callback")
             # First, Getting the relatif position timing in msec when playing
             ### Note: its depend for tick2sec function, sec_per_tick, sec_per_beat, and tempo variable
             reltime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
@@ -922,7 +923,6 @@ class MidiPlayer(object):
             seq_len = self.get_length() # in tick
             # Saving the player position
             self.set_play_pos(curtick)
-            # self.playpos = curtick
             # print(f"curtime: {self.curtime:.3f}, curtick: {self.playpos}, seq_pos: {seq_pos}")
             if not self._playing: break # exit the loop
             if self._recording:
@@ -946,22 +946,22 @@ class MidiPlayer(object):
            
             # Getting msg from data list
             if not _deq_data and not msg_pending: # convert collections container to boolean
-                debug(f"\nStarting Loop at loop_count: {loop_count}", write_file=True)
-                debug(f"No data in the buffer, at reltime: {reltime:.3f},\n"
-                        f"    curtick: {curtick}, curtime: {curtime:.3f}, next_tick: {next_tick}", write_file=True)
-                debug(f"Before retrieve data, curtick: {curtick}", write_file=True)
+                log.debug(f"\nStarting Loop at loop_count: {loop_count}", bell=0)
+                log.debug(f"No data in the buffer, at reltime: {reltime:.3f},\n"
+                        f"    curtick: {curtick}, curtime: {curtime:.3f}, next_tick: {next_tick}", bell=0)
+                log.debug(f"Before retrieve data, curtick: {curtick}", bell=0)
                 # play_pos = _sec2tick(curtime)
                 _deq_data.extend( _get_playable_data(curtick) )
-                # debug(f"voici next_tick: {next_tick}")
-                debug(f"After retrieve data, curtick: {curtick}, len _deq_data: {len(_deq_data)}", write_file=True)
+                # log.debug(f"voici next_tick: {next_tick}")
+                log.debug(f"After retrieve data, curtick: {curtick}, len _deq_data: {len(_deq_data)}", bell=0)
                 if not _deq_data:
                     _count += 1
-                    debug(f"No data retrieved from the playable, At curtick: {curtick}, next_tick: {next_tick}, _count: {_count}", write_file=True)
+                    log.debug(f"No data retrieved from the playable, At curtick: {curtick}, next_tick: {next_tick}, _count: {_count}")
                 if _deq_data:
                     msg_pending =1
                     finishing =0
                     if _count: 
-                        debug(f"There was data in the buffer, Total Count: {_count}, at curtick: {curtick}", write_file=True)
+                        log.debug(f"There was data in the buffer, Total Count: {_count}, at curtick: {curtick}", bell=0)
                     _count =0
 
       
@@ -1026,15 +1026,15 @@ class MidiPlayer(object):
                 """
                 
                 # Sending ev
-                debug(f"Sending message, and Drain out _deq_data with len: {len(_deq_data)}, at reltime: {reltime:.3f},\n" 
-                        f"    curtick: {curtick}, curtime: {curtime:.3f}\n", write_file=True)
+                log.debug(f"Sending message, and Drain out _deq_data with len: {len(_deq_data)}, at reltime: {reltime:.3f},\n" 
+                        f"    curtick: {curtick}, curtime: {curtime:.3f}\n", bell=0)
                 while _deq_data:
                     msg_ev = _deq_data.popleft()
                     self.midi_man.send_imm(msg_ev.msg)
             
                 # Manage next events
                 if not _deq_data:
-                    debug(f"Now _deq_data is empty at curtick: {curtick}, next_tick:  {next_tick}", write_file=True)
+                    log.debug(f"Now _deq_data is empty at curtick: {curtick}, next_tick:  {next_tick}", bell=0)
                     msg_ev = None
                     msg_timing =0
                     msg_pending =0                
@@ -1043,13 +1043,13 @@ class MidiPlayer(object):
                     # (_, next_tick) = _timeline.next_group_time()
                     if next_tick == -1: 
                         self.pause()
-                        debug(f"Stopping the Loop at: "
+                        log.debug(f"Stopping the Loop at: "
                                 f"curtick: {curtick}, curtime: {curtime:3.3f},\n"
-                                f"    reltime: {reltime:.3f}, next_tick: {next_tick}", write_file=True)
+                                f"    reltime: {reltime:.3f}, next_tick: {next_tick}")
                         break
                         
                     next_time = _tick2sec(next_tick)
-                    debug(f"After forward timeline, next_tick: {next_tick}, next_time: {next_time:.3f}", write_file=True)
+                    log.debug(f"After forward timeline, next_tick: {next_tick}, next_time: {next_time:.3f}", bell=0)
                     curtick = next_tick
                     curtime = next_time
 
@@ -1057,7 +1057,7 @@ class MidiPlayer(object):
             # time.sleep(0.001)
 
         # Out of loop
-        debug(f"\nOut of loop, clearing _deq_data with len: {len(_deq_data)}", write_file=True)
+        log.debug(f"\nOut of loop, clearing _deq_data with len: {len(_deq_data)}")
         _deq_data.clear()
         
         # Saving the curtime position
@@ -1065,8 +1065,8 @@ class MidiPlayer(object):
         last_time = reltime
         self.last_time = last_time
         # self.set_play_pos(last_tick)
-        debug(f"After the loop, last_tick: {last_tick}, next_tick: {next_tick},\n" 
-                f"    curtime: {curtime:.3f}, reltime: {reltime:.3f}, last_time: {last_time:.3f}", write_file=True)
+        log.debug(f"After the loop, last_tick: {last_tick}, next_tick: {next_tick},\n" 
+                f"    curtime: {curtime:.3f}, reltime: {reltime:.3f}, last_time: {last_time:.3f}")
 
     #-----------------------------------------
    
@@ -1165,51 +1165,51 @@ class MidiPlayer(object):
         ev_total =0
         msg = self.curseq.get_properties()
         title = "Properties"
-        debug(msg, title, write_file=True, stdout=False, endline=True)
+        log.debug(msg, title, writing_file=True, stdout=False, endline=True)
         
         # display track names
         for (i, name) in enumerate(self.curseq.track_names):
             msg = "Track {}@{} {}".format(i, name[0], name[1])
-            debug(msg, "", write_file=True, stdout=False, endline=False)
-        debug("", write_file=True, stdout=False, endline=False)
+            log.debug(msg, "", writing_file=True, stdout=False, endline=False)
+        log.debug("", writing_file=True, stdout=False, endline=False)
         
         
         # display all events
         if type == 0: # from interl midi tracks
             title = "From internal midi tracks "
-            debug("", title, write_file=True, stdout=False)
+            log.debug("", title, writing_file=True, stdout=False)
             for (i, track) in enumerate(self.curseq.track_lst):
                 title = "Track {}".format(i)
-                debug("", title, write_file=True, stdout=False)
+                log.debug("", title, writing_file=True, stdout=False)
                 ev_lst = track.get_list()
                 ev_len = len(ev_lst)
                 ev_total += ev_len
                 for (j, ev) in enumerate(ev_lst):
                     msg = ev.msg
-                    debug(repr(msg), write_file=True, stdout=False)
+                    log.debug(repr(msg), writing_file=True, stdout=False)
                 msg = "Track ev count: {}".format(ev_len)
-                debug(msg, write_file=True, stdout=False, endline=False)
+                log.debug(msg, writing_file=True, stdout=False, endline=False)
                 
             msg = "Total ev count: {}".format(ev_total)
-            debug(msg, write_file=True, stdout=False, endline=True)
+            log.debug(msg, writing_file=True, stdout=False, endline=True)
         else: # from midi file tracks
             ev_len =0
             ev_total =0
             title = "From Midi file tracks "
-            debug("", title, write_file=True, stdout=False)
+            log.debug("", title, writing_file=True, stdout=False)
             for (i, track) in enumerate(self.curseq.mid.tracks):
                 title = "Track {}".format(i)
-                debug("", title, write_file=True, stdout=False)
+                log.debug("", title, writing_file=True, stdout=False)
                 ev_len = len(track)
                 ev_total += ev_len
                 for (j, ev) in enumerate(track):
                     msg = ev
-                    debug(repr(msg), write_file=True, stdout=False)
+                    log.debug(repr(msg), writing_file=True, stdout=False)
                 msg = "Track ev count: {}".format(ev_len)
-                debug(msg, write_file=True, stdout=False, endline=False)
+                log.debug(msg, writing_file=True, stdout=False, endline=False)
                 
             msg = "Total ev count: {}".format(ev_total)
-            debug(msg, write_file=True, stdout=False, endline=True)
+            log.debug(msg, writing_file=True, stdout=False, endline=True)
 
 
     #-----------------------------------------
@@ -1222,7 +1222,7 @@ class MidiPlayer(object):
 
         ev_count =0
         title = "Event count from internal tracks"
-        debug("", title, write_file=True, stdout=False, endline=False)
+        log.debug("", title, writing_file=True, stdout=False, endline=False)
         for (i, track) in enumerate(self.track_lst):
             ev_lst = track.get_list()
             ev_len = len(ev_lst)
@@ -1232,15 +1232,15 @@ class MidiPlayer(object):
             except IndexError:
                 name = ""
             msg = "Track {}@{} {} events".format(i, name, ev_len)
-            debug(msg, "", write_file=True, stdout=False, endline=False)
-            # debug(msg)
+            log.debug(msg, "", writing_file=True, stdout=False, endline=False)
+            # log.debug(msg)
         msg = "Total evs count: {}".format(ev_count)
-        debug(msg, write_file=True, stdout=False, endline=True)
+        log.debug(msg, writing_file=True, stdout=False, endline=True)
         
         # from midi file tracks
         ev_count =0
         title = "Event count from midi file tracks"
-        debug("", title, write_file=True, stdout=False, endline=False)
+        log.debug("", title, writing_file=True, stdout=False, endline=False)
         for (i, track) in enumerate(self.mid.tracks):
             # ev_lst = track.get_list()
             ev_len = len(track)
@@ -1250,9 +1250,9 @@ class MidiPlayer(object):
             except IndexError:
                 name = ""
             msg = "Track {}@{} {} events".format(i, name, ev_len)
-            debug(msg, "", write_file=True, stdout=False, endline=False)
+            log.debug(msg, "", writing_file=True, stdout=False, endline=False)
         msg = "Total evs count: {}".format(ev_count)
-        debug(msg, write_file=True, stdout=False, endline=True)
+        log.debug(msg, writing_file=True, stdout=False, endline=True)
      
     #-----------------------------------------
 
