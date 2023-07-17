@@ -634,10 +634,12 @@ class MidiTrack(MidiChannel):
                     self.ev_grouping =0
                     break
         
+        # print(f"voici len lst: {len(lst)}")
         # debug(f"voici len lst: {len(lst)}")
         return lst
 
     #-----------------------------------------
+
 
     def gen_group_pos(self):
         """
@@ -1007,6 +1009,39 @@ class MidiTrack(MidiChannel):
 
     #-----------------------------------------
     
+    def search_group_time(self, time):
+        """
+        Deprecated function at this time
+        returns event list between last_pos, and exact time, 
+        used when we have allready a list of group time
+        from MidiTrack object
+        """
+
+        lst = []
+        
+        if self.pos >= len(self.ev_lst): return lst
+        while 1:
+            ev = self.get_ev()
+            if ev is not None:
+                msg = ev.msg
+                if msg.time >= self.lastpos and msg.time <= time:
+                # if msg.time >= self.lastpos and msg.time == time:
+                    lst.append(ev)
+                    # self.group_time_index +=1
+                    # self.time_grouping =1
+                    self.lasttime = msg.time
+                    self.next_ev()
+                else: break # msg.time > time
+            else: # ev is None
+                # self.time_grouping =0
+                break
+    
+        # debug(f"voici len lst: {len(lst)}")
+        return lst
+
+    #-----------------------------------------
+
+ 
     def sort(self):
         """
         sort events list
@@ -2107,7 +2142,9 @@ class MidiSequence(object):
         """
         
         global _DEBUG
-        _DEBUG =1
+        debugging =0
+        if _DEBUG: debugging =1
+        _DEBUG =0
         tim = self._timeline
         # filtering events with uniq time
         debug("\nFunc: gen_timeline, Initializing Timeline", "\nMidiSequence Info", write_file=True)
@@ -2117,6 +2154,8 @@ class MidiSequence(object):
         total_count =0
 
         for track in self.track_lst:
+            
+            # """
             curtime =-1
             for ev in track.ev_lst:
                 evtime = ev.msg.time
@@ -2124,11 +2163,13 @@ class MidiSequence(object):
                     tim.ev_lst.append(ev)
                     curtime = evtime
                     total_count +=1
+            # """
  
   
-            # tim.add_evs(*track.ev_lst)
-            # total_count += track.count()
-        
+            """
+            tim.add_evs(*track.ev_lst)
+            total_count += track.count()
+            """
         # sorting the timeline in place
         # tim.sort()
         tim.sort_uniq_evs()
@@ -2154,7 +2195,7 @@ class MidiSequence(object):
         for i, ev in enumerate(ev_lst[:nb_ev]): debug(f"{i}, tick: {ev.msg.time}, tracknum: {ev.tracknum}", write_file=True)
         debug(f"\nGroup Event Position time count: {len(tim.group_time_lst)}", write_file=True)
         for (i, item) in enumerate(tim.group_time_lst[:nb_ev]): debug(f"index Group: {i}, Pos: {item[0]}, Tick: {item[1]}", write_file=True)
-        _DEBUG =0
+        if debugging: _DEBUG =1
 
     #-----------------------------------------
 
@@ -2248,7 +2289,7 @@ class MidiSequence(object):
             track.lastpos =-1
             index = track.search_pos(pos)
             track.set_pos(index)
-
+        self.curpos =pos
     #-----------------------------------------
 
     def set_quantize_resolution(self, quan_res):
@@ -3587,13 +3628,21 @@ class MidiSequence(object):
         msg_lst = []
         debug(f"\nFunc: get_playable_data, at curtick: {curtick}", write_file=True)
         for (tracknum, track) in enumerate(self.track_lst):
+            # Note: Used, when we have a list of group time, for playing in realtime
+            # ev_lst = track.search_group_time(curtick)
             ev_lst = track.search_ev_group(curtick)
+            
+            """
             if not ev_lst: 
                 debug(f"No ev_lst at curtick: {curtick}, on tracknum {tracknum}", write_file=True)
             else: 
                 debug(f"Len ev_lst: {len(ev_lst)},  at curtick: {curtick}, on tracknum {tracknum}", write_file=True)
+            """
+
             for ev in ev_lst:
-                debug(f"msg: {ev.msg}", write_file=True)
+                # debug(f"msg: {ev.msg}", write_file=True)
+                # Note: TODO: it will better to filter messages in amount, when constructing the ev_lst
+                if ev.msg.time != curtick: continue
                 if ev.msg.type == "set_tempo":
                     new_tempo = ev.msg.tempo
                     if self.base.tempo != new_tempo:
