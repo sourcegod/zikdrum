@@ -12,6 +12,10 @@ import itertools as itt
 import mido
 import miditools as midto
 import constants as cst
+import logger as log
+
+log.set_level(log._DEBUG)
+
 
 _DEBUG =0
 _LOGFILE = "/tmp/zikdrum.log"
@@ -3626,7 +3630,7 @@ class MidiSequence(object):
         """
 
         msg_lst = []
-        debug(f"\nFunc: get_playable_data, at curtick: {curtick}", write_file=True)
+        log.debug(f"\nFunc: get_playable_data, at curtick: {curtick}", bell=0)
         for (tracknum, track) in enumerate(self.track_lst):
             # Note: Used, when we have a list of group time, for playing in realtime
             # ev_lst = track.search_group_time(curtick)
@@ -3634,13 +3638,13 @@ class MidiSequence(object):
             
             """
             if not ev_lst: 
-                debug(f"No ev_lst at curtick: {curtick}, on tracknum {tracknum}", write_file=True)
+                log.debug(f"No ev_lst at curtick: {curtick}, on tracknum {tracknum}", write_file=True)
             else: 
-                debug(f"Len ev_lst: {len(ev_lst)},  at curtick: {curtick}, on tracknum {tracknum}", write_file=True)
+                log.debug(f"Len ev_lst: {len(ev_lst)},  at curtick: {curtick}, on tracknum {tracknum}", write_file=True)
             """
 
             for ev in ev_lst:
-                # debug(f"msg: {ev.msg}", write_file=True)
+                # log.debug(f"msg: {ev.msg}", write_file=True)
                 # Note: TODO: it will better to filter messages in amount, when constructing the ev_lst
                 if ev.msg.time != curtick: continue
                 if ev.msg.type == "set_tempo":
@@ -3670,13 +3674,13 @@ class MidiSequence(object):
                     # TODO: We rolling the timeline in time so, we need to convert tick to sec???
                     # Not necessary
                     # msg.time = self.base.tick2sec(msg.time)
-                    # debug("voici msg: {}".format(msg))
+                    # log.debug("voici msg: {}".format(msg))
                     msg_lst.append(newev)
              
         if not msg_lst:
-            debug(f"No msg_lst, at curtick: {curtick}\n", write_file=True)
+            log.debug(f"No msg_lst, at curtick: {curtick}\n", bell=0)
         else:
-            debug(f"msg_lst len: {len(msg_lst)}, at curtick: {curtick}\n", write_file=True)
+            log.debug(f"msg_lst len: {len(msg_lst)}, at curtick: {curtick}\n", bell=0)
        
         return msg_lst
 
