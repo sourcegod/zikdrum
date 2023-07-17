@@ -214,7 +214,8 @@ class MidiPlayer(object):
         # check whether recording data is waiting before generate the track line
         self.check_rec_data()
         
-        self.curseq.update_tracks_position(self.playpos)
+        # Updating tracks with the current position
+        self.curseq.update_tracks_position(-1)
        
     #-----------------------------------------
 
@@ -321,7 +322,8 @@ class MidiPlayer(object):
 
         if self.curseq is None: return
         self.playpos = pos
-        # self.curseq.curpos = pos
+        # Saving the sequencer current position
+        self.curseq.curpos = pos
     
     #-----------------------------------------
 
@@ -515,7 +517,7 @@ class MidiPlayer(object):
         self.init_click()
         # self.trackline.set_pos(0)
         # self.trackline.lastpos =-1
-        self._play_pos =0
+        self.playpos =0
         self.last_time =-1
         self.msg_lst = []
         
@@ -919,8 +921,8 @@ class MidiPlayer(object):
             seq_pos = self.get_position() # in tick
             seq_len = self.get_length() # in tick
             # Saving the player position
-            # self.set_play_pos(curtick)
-            self.playpos = curtick
+            self.set_play_pos(curtick)
+            # self.playpos = curtick
             # print(f"curtime: {self.curtime:.3f}, curtick: {self.playpos}, seq_pos: {seq_pos}")
             if not self._playing: break # exit the loop
             if self._recording:
