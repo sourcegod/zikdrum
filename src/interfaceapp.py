@@ -66,8 +66,7 @@ class InterfaceApp(object):
         self.msg_app = "Groovit Synth..."
         self.notify(self.msg_app)
         if midi_filename:
-            self.player.open_midi_file(midi_filename)
-            self.player.play()
+            self.autoplay(midi_filename)
         else:
             # self.test_synth_engine()
             pass
@@ -277,6 +276,18 @@ class InterfaceApp(object):
         self.player.new_player()
         self.msg_app = "New Player is Created"
         self.notify(self.msg_app)
+
+    #-------------------------------------------
+
+    def autoplay(self, filename=None, *args, **kwargs):
+        """
+        Play automatically midi file
+        from InterfaceApp object
+        """
+        
+        if filename:
+            self.player.open_midi_file(filename)
+            self.player.play()
 
     #-------------------------------------------
 

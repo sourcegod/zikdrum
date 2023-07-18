@@ -287,6 +287,7 @@ class MidiPlayer(object):
         if pos == -1: pos = self.get_position()
         if state:
             self._playing =0
+            pass
             # self.stop_engine()
             self.midi_man.panic()
         
