@@ -942,6 +942,13 @@ class MidiPlayer(object):
         log.debug("\nFunc: Enter in _midi_callback", "MidiPlayer Info")
         log.debug(f"\nBefore the loop, curtick: {curtick}, next_tick: {next_tick}, last_time: {last_time:.3f}")
         while self._playing and _is_running():
+            """
+            if not self._bpm_changed and curtick >= 1024*4: 
+                # self.change_bpm(60)
+                self._bpm_changed =1
+                break
+            """
+
             # log.debug("\nIn loop: _midi_callback")
             # First, Getting the relatif position timing in msec when playing
             ### Note: its depend for tick2sec function, sec_per_tick, sec_per_beat, and tempo variable

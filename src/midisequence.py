@@ -2060,6 +2060,7 @@ class MidiSequence(object):
         self._next_pos =0
         self._last_pos =0
         self._timeline = None # A MidiTrack object
+        self._bpm_changed =0
 
     #-----------------------------------------
 
@@ -3626,6 +3627,14 @@ class MidiSequence(object):
 
         msg_lst = []
         log.debug(f"\nFunc: get_playable_data, at curtick: {curtick}", bell=0)
+        
+        """
+        if not self._bpm_changed and curtick >= 1024 * 5:
+            log.debug(f"[bpm_change], at turtick: {curtick}")
+            self.parent.change_bpm(60)
+            self._bpm_changed =1
+        """
+
         for (tracknum, track) in enumerate(self.track_lst):
             # Note: Used, when we have a list of group time, for playing in realtime
             ev_lst = track.search_ev_group_time(curtick)
