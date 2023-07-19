@@ -55,11 +55,12 @@ class EventQueue(object):
     #-----------------------------------------
 
     def push_event(self, type, value):
-        self._write_index = self._write_index + 1 % self._max_ev
+        self._write_index +=1 # We will be able to count number of writings
+        index = self._write_index % self._max_ev
         ev = EventMessage()
         ev.type = type
         ev.value = value
-        self._ev_buffer[self._write_index] = ev
+        self._ev_buffer[index] = ev
 
     #-----------------------------------------
 
@@ -68,11 +69,11 @@ class EventQueue(object):
             ev = EventMessage()
             return ev
         
-        self._read_index = self._read_index + 1 % self._max_ev
-        return self._ev_buffer[self._read_index]
+        self._read_index +=1 # We save the read_index count
+        index = self._read_index % self._max_ev
+        return self._ev_buffer[index]
 
     #-----------------------------------------
-
 
 #========================================
 
