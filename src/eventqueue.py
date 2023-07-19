@@ -14,7 +14,8 @@ EVENT_MIDI_ACTIVITY =2
 EVENT_NOTEON =3
 EVENT_ERROR =4
 EVENT_TEMPO_CHANGED =5
-EVENT_PROGRESS =6
+EVENT_BPM_CHANGED =6
+EVENT_PROGRESS =7
 
 #-----------------------------------------
 
@@ -66,7 +67,7 @@ class EventQueue(object):
 
     def pop_event(self):
         if self._read_index == self._write_index:
-            ev = EventMessage()
+            ev = EventMessage() # None event
             return ev
         
         self._read_index +=1 # We save the read_index count
@@ -74,8 +75,23 @@ class EventQueue(object):
         return self._ev_buffer[index]
 
     #-----------------------------------------
+    
+    def is_pending(self):
+        """
+        Check whether we can read from the buffer
+        from EventQueue object
+        """
+
+        return self._read_index != self._write_index
+
+    #-----------------------------------------
 
 #========================================
+
+def get_instance():
+    return EventQueue.get_instance()
+
+#-----------------------------------------
 
 if __name__ == "__main__":
     evq = EventQueue.get_instance()

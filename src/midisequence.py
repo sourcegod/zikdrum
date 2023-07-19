@@ -13,8 +13,10 @@ import mido
 import miditools as midto
 import constants as cst
 import logger as log
+import eventqueue as evq
 
 log.set_level(log._DEBUG)
+_evq_instance = evq.get_instance()
 
 
 _DEBUG =1
@@ -3628,12 +3630,14 @@ class MidiSequence(object):
         msg_lst = []
         log.debug(f"\nFunc: get_playable_data, at curtick: {curtick}", bell=0)
         
-        """
-        if not self._bpm_changed and curtick >= 1024 * 5:
-            log.debug(f"[bpm_change], at turtick: {curtick}")
-            self.parent.change_bpm(60)
+        # """
+        if not self._bpm_changed and curtick >= 1024 * 4:
+            # log.debug(f"[bpm_change], at turtick: {curtick}")
+            type = evq.EVENT_BPM_CHANGED
+            value = 60
+            _evq_instance.push_event(type, value)
             self._bpm_changed =1
-        """
+        # """
 
         for (tracknum, track) in enumerate(self.track_lst):
             # Note: Used, when we have a list of group time, for playing in realtime

@@ -12,8 +12,11 @@ import midisequence as midseq
 import midisched as midsch
 from collections import deque
 import logger as log
+import eventqueue as evq
+
 log.set_level(log._OFF)
 # log.set_level(log._DEBUG)
+_evq_instance = evq.get_instance()
 
 _DEBUG =0
 _LOGFILE = "/tmp/zikdrum.log"
@@ -942,12 +945,13 @@ class MidiPlayer(object):
         log.debug("\nFunc: Enter in _midi_callback", "MidiPlayer Info")
         log.debug(f"\nBefore the loop, curtick: {curtick}, next_tick: {next_tick}, last_time: {last_time:.3f}")
         while self._playing and _is_running():
-            """
-            if not self._bpm_changed and curtick >= 1024*4: 
-                # self.change_bpm(60)
-                self._bpm_changed =1
-                break
-            """
+            # """
+            if _evq_instance.is_pending():
+                evmsg = _evq_instance.pop_event()
+                if evmsg.type == evq.EVENT_BPM_CHANGED:
+                    self._bpm_changed =1
+                    break
+            # """
 
             # log.debug("\nIn loop: _midi_callback")
             # First, Getting the relatif position timing in msec when playing
@@ -1102,7 +1106,9 @@ class MidiPlayer(object):
         # self.set_play_pos(last_tick)
         log.debug(f"After the loop, last_tick: {last_tick}, next_tick: {next_tick},\n" 
                 f"    curtime: {curtime:.3f}, reltime: {reltime:.3f}, last_time: {last_time:.3f}")
-
+        if self._bpm_changed:
+            self._bpm_changed =0
+            self.change_bpm(60)
     #-----------------------------------------
    
 
