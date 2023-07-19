@@ -12,7 +12,8 @@ import midisequence as midseq
 import midisched as midsch
 from collections import deque
 import logger as log
-log.set_level(log._DEBUG)
+log.set_level(log._OFF)
+# log.set_level(log._DEBUG)
 
 _DEBUG =0
 _LOGFILE = "/tmp/zikdrum.log"
@@ -73,6 +74,7 @@ class MidiPlayer(object):
         self.click_playing =0
         self.is_ready = False
         self._deq_data = deque()
+        self._bpm_changed =0
 
 
     #-----------------------------------------
@@ -149,6 +151,15 @@ class MidiPlayer(object):
         """
 
         if self.curseq is None: return 0
+        
+        """
+        state = self._playing
+        if state: 
+            self._playing =0
+            self.midi_man.panic()
+            pass
+        """
+
         clicked =0
         if self.is_clicking():
             clicked =1
@@ -157,15 +168,30 @@ class MidiPlayer(object):
         
        
         self.curseq.set_bpm(bpm)
+        
+        # Note: Normally, without panic function, needing a pause after set_bpm function, 
+        # time.sleep(0.1)
         # Sets the Sequencer to the current position
         self.set_position(-1)
+        
+        """
+        self.init_pos()
+        self.curseq.set_position(-1)
+        # self.reset_time()
+        """
 
         if clicked:
             self.start_click()
+        # if state: self._playing =1
         
     #-----------------------------------------
 
-    def update_bpm0(self, bpm):
+    def bpm_changed(self):
+        return self._bpm_changed
+
+    #-----------------------------------------
+
+    def update_bpm(self, bpm):
         """
         Deprecated function
         update the bpm (beat per minute) without changing tempo track
@@ -176,9 +202,10 @@ class MidiPlayer(object):
         if self.is_clicking():
             clicked =1
             self.stop_click()
-        self.curseq.update_bpm(bpm)
+        # self.curseq.update_bpm(bpm)
         if clicked:
             self.start_click()
+        self.reset_time()
     
     #-----------------------------------------
 
@@ -287,8 +314,8 @@ class MidiPlayer(object):
         if pos == -1: pos = self.get_position()
         if state:
             self._playing =0
-            pass
             # self.stop_engine()
+            # Note: Panic function is very important, to pause the Midi system
             self.midi_man.panic()
         
         self.init_pos()
@@ -297,7 +324,7 @@ class MidiPlayer(object):
         if state:
             self._playing =1
             # self.start_engine()
-            # time.sleep(2)
+            # time.sleep(0.1)
         
         return pos
     #-----------------------------------------
@@ -690,7 +717,7 @@ class MidiPlayer(object):
         """
         # scheduling time
         curpos = self.get_position()
-        self.last_time = self.curseq.base.tick2sec(curpos)
+        self.last_time = self._base.tick2sec(curpos)
         seq_len = self.curseq.get_length()
         self.start_time = time.time()
 

@@ -10,7 +10,10 @@ import midiplayer as midp
 import midimanager as midman
 import miditools as midto
 import utils as uti
+import logger as log
 
+
+# log.set_level(log._DEBUG)
 class InterfaceApp(object):
     """ manage interface application"""
     def __init__(self, parent):
@@ -49,6 +52,7 @@ class InterfaceApp(object):
         from InterfaceApp object
         """
 
+        log.init_logfile()
         self.midi_man = midman.MidiManager(self)
         self.midi_man.init_midi(midin_port, midout_port, synth_type, self.filename, audio_device)
         self.midplay = midp

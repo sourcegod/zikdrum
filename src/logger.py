@@ -5,6 +5,7 @@
     Date: Mon, 17/07/2023
     Author: Coolbrother
 """
+import os
 
 _OFF =0
 _INFO =1
@@ -17,6 +18,18 @@ _BELL =0
 _STDOUT =1
 _ENDLINE =0
 _WRITING_FILE =1
+
+def init_logfile():
+    """
+    Removing log file at startup
+    """
+    
+    if _LOG_LEVEL == _OFF: return
+    if not os.path.exists(_LOG_FILE): return
+    os.remove(_LOG_FILE)
+    print(f"Removed file: {_LOG_FILE}")
+
+#------------------------------------------------------------------------------
 
 def _set_logger(msg="", title="", bell=True, writing_file=False, stdout=True, endline=False):
     if _LOG_LEVEL == _OFF: return
