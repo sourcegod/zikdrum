@@ -941,6 +941,7 @@ class MidiPlayer(object):
             self.last_time = curtime
         last_time = self.last_time 
         loop_count =0
+        evmsg = None
         
         log.debug("\nFunc: Enter in _midi_callback", "MidiPlayer Info")
         log.debug(f"\nBefore the loop, curtick: {curtick}, next_tick: {next_tick}, last_time: {last_time:.3f}")
@@ -1108,7 +1109,7 @@ class MidiPlayer(object):
                 f"    curtime: {curtime:.3f}, reltime: {reltime:.3f}, last_time: {last_time:.3f}")
         if self._bpm_changed:
             self._bpm_changed =0
-            self.change_bpm(60)
+            self.change_bpm(evmsg.value)
     #-----------------------------------------
    
 

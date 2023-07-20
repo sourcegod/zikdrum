@@ -24,7 +24,7 @@ def init_logfile():
     Removing log file at startup
     """
     
-    if _LOG_LEVEL == _OFF: return
+    # if _LOG_LEVEL == _OFF: return
     if not os.path.exists(_LOG_FILE): return
     os.remove(_LOG_FILE)
     print(f"Removed file: {_LOG_FILE}")
