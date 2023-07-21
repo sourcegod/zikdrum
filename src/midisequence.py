@@ -605,6 +605,7 @@ class MidiTrack(MidiChannel):
         returns next event time in the event list
         from MidiTrack object
         """
+        # debug("")
         
         ev = self.next_ev()
         if ev is None: return -1
@@ -2058,7 +2059,7 @@ class MidiSequence(object):
         self._length =0
         self.clipboard = []
         self.group_ev = None
-        self.old_tempo =120
+        self.old_tempo =0
         self._next_pos =0
         self._last_pos =0
         self._timeline = None # A MidiTrack object
@@ -3629,6 +3630,7 @@ class MidiSequence(object):
 
         msg_lst = []
         log.debug(f"\nFunc: get_playable_data, at curtick: {curtick}", bell=0)
+        # debug(f"\nFunc: get_playable_data, at curtick: {curtick}", bell=0)
         
         """
         if not self._bpm_changed and curtick >= 1024 * 4:
@@ -3653,24 +3655,31 @@ class MidiSequence(object):
 
             for (index, ev) in enumerate(ev_lst):
                 # log.debug(f"msg: {ev.msg}", writing_file=True)
+                # debug(f"msg: {ev.msg}", writing_file=True)
                 
                 """
                 if ev.msg.type == "set_tempo":
-                    self.old_tempo = self.base.tempo
+                    tempo = self.base.tempo
                     new_tempo = ev.msg.tempo
-                    if abs(self.old_tempo - new_tempo) >= 1000:
-                    # if (curtick - self._last_pos) >= 256:
+                    # debug(f"old_tempo: {self.old_tempo}, new_tempo: {new_tempo}")
+                    bpm = self.base.tempo2bpm(new_tempo)
+                    if self.old_tempo == 0:
+                        self.old_tempo = tempo
+                        debug(f"[Old tempo_change]: {self.old_tempo}, bpm: {bpm:.3f}, at tick: {ev.msg.time}")
+                    old_bpm = self.base.tempo2bpm(self.old_tempo)
+                    if self.old_tempo != new_tempo and abs(old_bpm - bpm) >= 10:
+                    # if abs(self.old_tempo - new_tempo) >= 10000:
                         self._last_pos = curtick
                         self.old_tempo = new_tempo
                         self.base.tempo = new_tempo
 
-                        self.base.update_tempo_params()
+                        # self.base.update_tempo_params()
                         # msec = self.base.tick2sec(ev.msg.time)
-                        bpm = self.base.tempo2bpm(self.old_tempo)
+                        # bpm = self.base.tempo2bpm(self.old_tempo)
                         # debug(f"[tempo_change]: {new_tempo}, bpm: {bpm:.3f}, at tick: {ev.msg.time}")
                         type = evq.EVENT_BPM_CHANGED
                         value = bpm
-                        # _evq_instance.push_event(type, value)
+                        _evq_instance.push_event(type, value)
                 """
 
                 # print(f"Type Set_tempo, tempo: {ev.msg.tempo}, bpm: {bpm:.3f}, msec: {msec:.3f}")

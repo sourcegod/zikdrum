@@ -9,6 +9,8 @@
 
 import time
 import threading
+import eventqueue as evq
+_evq_instance = evq.get_instance()
 
 class MidiSched(object):
     """ 
@@ -137,8 +139,11 @@ class MidiSched(object):
         while self._thread_running:
             # debug("")
             midi_callback()
+            # self._player.check_bpm()
             # pauses the system, necessary to change position
             time.sleep(0.1)
+            print("\a")
+            
     
     #-----------------------------------------
    

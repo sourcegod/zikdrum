@@ -18,7 +18,7 @@ log.set_level(log._OFF)
 # log.set_level(log._DEBUG)
 _evq_instance = evq.get_instance()
 
-_DEBUG =0
+_DEBUG =1
 _LOGFILE = "/tmp/zikdrum.log"
 _BELL =1
 
@@ -54,6 +54,7 @@ class MidiPlayer(object):
         self.playpos =0 # in tick
         self.msg_lst = []
         self._playing =0
+        self._start_playing =0
         self._paused =0
         self._recording =0
         self.incoming =0 # for incoming messages
@@ -78,6 +79,9 @@ class MidiPlayer(object):
         self.is_ready = False
         self._deq_data = deque()
         self._bpm_changed =0
+        self._count =0
+        self._loop_count =0
+        self._bpm =0
 
 
     #-----------------------------------------
@@ -189,8 +193,13 @@ class MidiPlayer(object):
         
     #-----------------------------------------
 
-    def bpm_changed(self):
-        return self._bpm_changed
+    def check_bpm(self):
+        if self._bpm_changed:
+            self.change_bpm(self._bpm)
+            self._bpm_changed =0
+            # debug(f"voici _bpm: {self._bpm}")
+            time.sleep(0.1)
+
 
     #-----------------------------------------
 
@@ -221,6 +230,7 @@ class MidiPlayer(object):
         if self.curseq is None: return
         if not self._playing:
             self._playing =1
+            self._start_playing =1
             self._paused =0
             if not self.is_running():
                 # self.start_midi_engine()
@@ -236,6 +246,7 @@ class MidiPlayer(object):
         
         if self.curseq is None: return
         self._playing =0
+        self._start_playing =0
         self._paused =1
         if self._recording:
             self.stop_record()
@@ -265,12 +276,13 @@ class MidiPlayer(object):
             self.stop_record()
         self.finishing =0
         self._playing =0
+        self._start_playing =0
         self._paused =0
         self._recording =0
         self.midi_man.panic()
         self.check_rec_data()
         self.set_position(0)
-        log.debug()
+        debug()
 
     #-----------------------------------------
     
@@ -326,6 +338,7 @@ class MidiPlayer(object):
         
         if state:
             self._playing =1
+            self._start_playing =1
             # self.start_engine()
             # time.sleep(0.1)
         
@@ -713,6 +726,16 @@ class MidiPlayer(object):
 
     #-----------------------------------------
 
+    def get_time(self):
+        """
+        Returns real time
+        from MidiPlayer object
+        """
+        
+        return time.time()
+
+    #-----------------------------------------
+
     def reset_time(self):
         """
         resetting time parameters
@@ -721,18 +744,17 @@ class MidiPlayer(object):
         # scheduling time
         curpos = self.get_position()
         self.last_time = self._base.tick2sec(curpos)
-        seq_len = self.curseq.get_length()
         self.start_time = time.time()
 
     #-----------------------------------------
 
-    def init_time(self):
+    def init_start_time(self):
         """
         init start_time
         from MidiPlayer object
         """
         
-        return time.time()
+        self.start_time = time.time()
 
     #-----------------------------------------
 
@@ -742,10 +764,19 @@ class MidiPlayer(object):
         from MidiPlayer object
         """
 
-        sec_per_tick = self._base.sec_per_tick
-        return (time.time() - self.start_time) + self.last_time # + sec_per_tick
+        return (time.time() - self.start_time) + self.last_time
 
     #-----------------------------------------
+    def set_last_time(self, _time):
+        """
+        Sets the last time position
+        from MidiPlayer object
+        """
+
+        self.last_time = _time
+
+    #-----------------------------------------
+
 
     def _midi_callback0(self):
         """
@@ -927,44 +958,50 @@ class MidiPlayer(object):
         click_ev = None
         click_pending =0
         click_timing =0
-
+        
         seq_pos = self.get_position()
-        self.start_time = self.init_time() # time.time()
         seq_len = self.get_length()
-        _count =0
         curtick = seq_pos # curtick = self.get_position()
         curtime = _tick2sec(curtick)
         next_tick =0
         next_time =0
         reltime =0 # relative clock timing
         if self.last_time == -1:
-            self.last_time = curtime
-        last_time = self.last_time 
-        loop_count =0
-        evmsg = None
+            self.set_last_time(curtime)
+
+        if self._start_playing:
+            self.init_start_time() # time.time()
+            _deq_data.clear()
+            self._count =0
+            self._loop_count =0
+            self._start_playing =0
         
         log.debug("\nFunc: Enter in _midi_callback", "MidiPlayer Info")
-        log.debug(f"\nBefore the loop, curtick: {curtick}, next_tick: {next_tick}, last_time: {last_time:.3f}")
+        log.debug(f"\nBefore the loop, curtick: {curtick}, next_tick: {next_tick}, last_time: {self.last_time:.3f}")
+        debug("")
+        # if self._playing and _is_running():
         while self._playing and _is_running():
-            # """
+            """
             if _evq_instance.is_pending():
                 evmsg = _evq_instance.pop_event()
                 if evmsg.type == evq.EVENT_BPM_CHANGED:
                     self._bpm_changed =1
+                    self._bpm = evmsg.value
+                    # debug("Bpm Changed")
+                    # self._playing =0
                     break
-            # """
+            """
 
-            # log.debug("\nIn loop: _midi_callback")
+            # debug("")
             # First, Getting the relatif position timing in msec when playing
             ### Note: its depend for tick2sec function, sec_per_tick, sec_per_beat, and tempo variable
             reltime = self.get_reltime() # (time.time() - self.start_time) + self.last_time
             # Convert this position in tick to get midi events
             seq_pos = self.get_position() # in tick
             seq_len = self.get_length() # in tick
-            # Saving the player position
             self.set_play_pos(curtick)
             # print(f"curtime: {self.curtime:.3f}, curtick: {self.playpos}, seq_pos: {seq_pos}")
-            if not self._playing: break # exit the loop
+            if not self._playing: pass # break # exit the loop
             if self._recording:
                 self.set_play_pos(curtick)
             else: # not recording
@@ -985,8 +1022,8 @@ class MidiPlayer(object):
          
            
             # Getting msg from data list
-            if not _deq_data and not msg_pending: # convert collections container to boolean
-                log.debug(f"\nStarting Loop at loop_count: {loop_count}", bell=0)
+            if not _deq_data: # convert collections container to boolean
+                log.debug(f"\nStarting Loop at loop_count: {self._loop_count}", bell=0)
                 log.debug(f"No data in the buffer, at reltime: {reltime:.3f},\n"
                         f"    curtick: {curtick}, curtime: {curtime:.3f}, next_tick: {next_tick}", bell=0)
                 log.debug(f"Before retrieve data, curtick: {curtick}", bell=0)
@@ -995,61 +1032,16 @@ class MidiPlayer(object):
                 # log.debug(f"voici next_tick: {next_tick}")
                 log.debug(f"After retrieve data, curtick: {curtick}, len _deq_data: {len(_deq_data)}", bell=0)
                 if not _deq_data:
-                    _count += 1
-                    log.debug(f"No data retrieved from the playable, At curtick: {curtick}, next_tick: {next_tick}, _count: {_count}")
+                    self._count += 1
+                    log.debug(f"No data retrieved from the playable, At curtick: {curtick}, next_tick: {next_tick}, _count: {self._count}")
                 if _deq_data:
-                    msg_pending =1
-                    finishing =0
-                    if _count: 
-                        log.debug(f"There was data in the buffer, Total Count: {_count}, at curtick: {curtick}", bell=0)
-                    _count =0
+                    if self._count: 
+                        log.debug(f"There was data in the buffer, Total Count: {self._count}, at curtick: {curtick}", bell=0)
+                    self._count =0
 
       
-          
-            """
-            # click part
-            if not self.click_track.is_active():
-                finishing =1
-            else: # click track is active
-                finishing =0
-                if not click_timing and not click_pending:
-                    if not click_lst:
-                        click_lst = self._seq.get_click_data()
-                        if click_lst:
-                            click_pending =1
-                    else: # there is ev in click_lst
-                        click_pending =1
-
-                # getting click_ev
-                if click_ev is None and click_pending and click_lst:
-                    click_ev = click_lst[0]
-                    click_timing =1
-                    click_pending =1
-                
-                if click_ev:
-                    if self.curtime >= click_ev.msg.time:
-                        # send ev
-                        track = self.curseq.get_track(0)
-                        if not track.muted and not track.sysmuted:
-                            # print("voici: ", click_ev.msg)
-                            self.midi_man.output_message(click_ev.msg)
-                        # delete msg in the buffer after sending
-                        try:
-                            click_lst.pop(0)
-                        except IndexError:
-                            pass
-                        click_ev = None
-                        click_timing =0
-                        if not click_lst:
-                            click_pending =0                
-                    elif curtime < click_evcurmsg.time: 
-                        click_timing =1
-                        # maybe there is an ev in the list, cause not yet poped
-                        click_pending =1
-
-            """
-
             # Drain out the queue
+            # while self.get_reltime() <  curtime: time.sleep(0.1)
             if reltime >= curtime: 
                 """
                 # Note: FIXME, Can be managed before queuing
@@ -1076,40 +1068,40 @@ class MidiPlayer(object):
                 if not _deq_data:
                     log.debug(f"Now _deq_data is empty at curtick: {curtick}, next_tick:  {next_tick}", bell=0)
                     msg_ev = None
-                    msg_timing =0
-                    msg_pending =0                
                     # Getting next tick
                     next_tick = _timeline.next_ev_time()
                     # (_, next_tick) = _timeline.next_group_time()
                     if next_tick == -1: 
-                        self.pause()
+                        # self.pause()
                         log.debug(f"Stopping the Loop at: "
                                 f"curtick: {curtick}, curtime: {curtime:3.3f},\n"
                                 f"    reltime: {reltime:.3f}, next_tick: {next_tick}")
                         break
+                        pass
                         
                     next_time = _tick2sec(next_tick)
                     log.debug(f"After forward timeline, next_tick: {next_tick}, next_time: {next_time:.3f}", bell=0)
                     curtick = next_tick
                     curtime = next_time
+                    # Saving the player position
+                    # self.set_play_pos(curtick)
+                    # break
 
-            loop_count +=1
+            self._loop_count +=1
             # time.sleep(0.001)
 
         # Out of loop
         log.debug(f"\nOut of loop, clearing _deq_data with len: {len(_deq_data)}")
-        _deq_data.clear()
+        # _deq_data.clear()
         
         # Saving the curtime position
         last_tick = curtick # _sec2tick(curtime) # in tick
         last_time = reltime
-        self.last_time = last_time
+        if not self._playing:
+            self.set_last_time(reltime)
         # self.set_play_pos(last_tick)
         log.debug(f"After the loop, last_tick: {last_tick}, next_tick: {next_tick},\n" 
                 f"    curtime: {curtime:.3f}, reltime: {reltime:.3f}, last_time: {last_time:.3f}")
-        if self._bpm_changed:
-            self._bpm_changed =0
-            self.change_bpm(evmsg.value)
     #-----------------------------------------
    
 
