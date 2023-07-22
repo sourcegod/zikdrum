@@ -3653,6 +3653,7 @@ class MidiSequence(object):
             else: 
                 log.debug(f"Len ev_lst: {len(ev_lst)},  at curtick: {curtick}, on tracknum {tracknum}", writing_file=True)
             """
+            if track.muted or track.sysmuted: continue
 
             for (index, ev) in enumerate(ev_lst):
                 # log.debug(f"msg: {ev.msg}", writing_file=True)
