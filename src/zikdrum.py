@@ -737,17 +737,17 @@ class MainApp(object):
 
     #-------------------------------------------
     
-    def main(self, midi_filename="", audio_device=""):
+    def main(self, inport_num=0, outport_num=0, synth_type=0, midi_filename="", audio_out=""):
         """ 
         main function 
         from MainApp object
         """
         
-        if not audio_device:
-            audio_device = "hw:0"
+        if not audio_out:
+            audio_out = "hw:0"
         self.iap = intapp.InterfaceApp(self)
         self.notifying =1
-        self.iap.init_app(midi_filename, audio_device)
+        self.iap.init_app(inport_num, outport_num, synth_type, midi_filename=midi_filename, audio_device=audio_out)
         self.key_handler()
 
     #-------------------------------------------
@@ -755,15 +755,19 @@ class MainApp(object):
 #========================================
 
 if __name__ == "__main__":
+    inport_num =0
+    outport_num =2
+    synth_type =0
     midi_filename = ""
-    audio_device = "" # hw:0 by default
+    audio_out = "" # hw:0 by default
     app = MainApp()
     if len(sys.argv) >= 2:
         midi_filename = sys.argv[1]
     if len(sys.argv) >= 3:
-        audio_device = sys.argv[2]
+        audio_out = sys.argv[2]
         # print("voici filename", filename)
-    app.main(midi_filename, audio_device)
+    app.main(inport_num, outport_num, synth_type, midi_filename, audio_out)
+    # app.main(midi_filename, audio_device)
     
 
 #------------------------------------------------------------------------------
