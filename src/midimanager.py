@@ -947,7 +947,7 @@ class MidiManager(object):
         Add items to the out_queue queue
         from MidiManager object
         """
-        self._out_queue.extend(*items)
+        self._out_queue.extend(items)
 
     
     #-----------------------------------------
@@ -983,16 +983,18 @@ class MidiManager(object):
 
     #-----------------------------------------
 
-    def poll_out(self):
+    def poll_out(self, extra_proc=None):
         """
         Poll out the _out_queue
         from MidiManager object
         """
         
         if self._synth_obj is None: return
-        while self._out_queue:
-            msg = self._out_queue.popleft()
-            self.send_imm(msg)
+        # managing extra processor function
+        if extra_proc: pass # Note: TODO
+        while self._out_queue: # _out_queue has item
+            msg_ev = self._out_queue.popleft()
+            self._synth_obj.send_imm(msg_ev.msg)
 
     #-----------------------------------------
 

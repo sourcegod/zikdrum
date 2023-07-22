@@ -142,7 +142,7 @@ class MidiSched(object):
             # self._player.check_bpm()
             # pauses the system, necessary to change position
             time.sleep(0.1)
-            print("\a")
+            # print("\a")
             
     
     #-----------------------------------------
