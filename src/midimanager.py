@@ -7,6 +7,7 @@
 """
 
 import time
+from collections import deque
 import fluidsynth
 import mido
 from constants import * # for patch_lst
@@ -455,6 +456,8 @@ class MidiManager(object):
         self._audio_out = "hw:0"
         self._bpm =100
         self._tempo = 60 / self._bpm # time in sec
+        self._out_queue = deque()
+
 
     #-----------------------------------------
 
@@ -939,6 +942,60 @@ class MidiManager(object):
 
     #-----------------------------------------
 
+    def push_item(self, *items):
+        """
+        Add items to the out_queue queue
+        from MidiManager object
+        """
+        self._out_queue.extend(*items)
+
+    
+    #-----------------------------------------
+
+    def pop_item(self):
+        """
+        Remove items from the out_queue queue
+        from MidiManager object
+        """
+
+        if not self._out_queue:  return 
+        return self._out_queue.popleft()
+
+    #-----------------------------------------
+
+    def clear(self):
+        """
+        Clearing the _out_queue
+        from MidiManager object
+        """
+
+        self._out_queue.clear()
+
+    #-----------------------------------------
+
+    def is_pending(self):
+        """
+        Test whether the _out_queue is empty
+        from MidiManager object
+        """
+
+        return len(self._out_queue)
+
+    #-----------------------------------------
+
+    def poll_out(self):
+        """
+        Poll out the _out_queue
+        from MidiManager object
+        """
+        
+        if self._synth_obj is None: return
+        while self._out_queue:
+            msg = self._out_queue.popleft()
+            self.send_imm(msg)
+
+    #-----------------------------------------
+
     def demo(self, prog=16, chan=1, *args, **kwargs):
         """
         Test the app
@@ -959,4 +1016,5 @@ if __name__ == "__main__":
     mid = MidiManager()
     mid.init_midi("")
     input("It's Ok")
+#-----------------------------------------
 
