@@ -605,10 +605,11 @@ class MidiTrack(MidiChannel):
         returns next event time in the event list
         from MidiTrack object
         """
-        # debug("")
         
         ev = self.next_ev()
-        if ev is None: return -1
+        if ev is None\
+            or ev.msg.time >= self.ev_lst[-1].msg.time: 
+            return -1
         
         return ev.msg.time
 

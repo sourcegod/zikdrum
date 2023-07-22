@@ -942,6 +942,11 @@ class MidiManager(object):
 
     #-----------------------------------------
 
+    def get_out_queue(self):
+        return self._out_queue
+
+    #-----------------------------------------
+
     def push_item(self, *items):
         """
         Add items to the out_queue queue

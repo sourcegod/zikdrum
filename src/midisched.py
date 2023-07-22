@@ -138,7 +138,10 @@ class MidiSched(object):
         midi_callback = self._player._midi_callback
         while self._thread_running:
             # debug("")
-            midi_callback()
+            ret = midi_callback()
+            if ret == -1:
+                # self._player.pause()
+                pass
             # self._player.check_bpm()
             # pauses the system, necessary to change position
             time.sleep(0.1)
