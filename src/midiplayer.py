@@ -10,7 +10,6 @@ import time
 import miditools as midto
 import midisequence as midseq
 import midisched as midsch
-from collections import deque
 import logger as log
 import eventqueue as evq
 
@@ -77,7 +76,6 @@ class MidiPlayer(object):
         self.click_recording =0
         self.click_playing =0
         self.is_ready = False
-        self._deq_data = deque()
         self._bpm_changed =0
         self._count =0
         self._loop_count =0
@@ -946,11 +944,12 @@ class MidiPlayer(object):
         _get_playable_data = self.curseq.get_playable_data
         _tick2sec = self._base.tick2sec
         _sec2tick = self._base.sec2tick
-        _deq_data = self._deq_data
         _timeline = self.curseq._timeline
-        _mid_push_item = self.midi_man.push_item
-        _mid_is_pending = self.midi_man.is_pending
-        _mid_poll_out = self.midi_man.poll_out
+
+        _deq_push_item = self.midi_man.push_item
+        _deq_is_pending = self.midi_man.is_pending
+        _deq_count = self.midi_man.count
+        _deq_poll_out = self.midi_man.poll_out
 
         if not (self._playing and _is_running()): return
         # Todo: dont init click_lst
@@ -976,7 +975,6 @@ class MidiPlayer(object):
         if self._start_playing:
             self.init_start_time() # time.time()
             self.midi_man.clear()
-            # _deq_data.clear()
             self._count =0
             self._loop_count =0
             self._start_playing =0
@@ -1027,21 +1025,19 @@ class MidiPlayer(object):
          
            
             # Getting msg from data list
-            if not _mid_is_pending(): 
-            # if not _deq_data: # convert collections container to boolean
+            if not _deq_is_pending(): 
                 log.debug(f"\nStarting Loop at loop_count: {self._loop_count}", bell=0)
                 log.debug(f"No data in the buffer, at reltime: {reltime:.3f},\n"
                         f"    curtick: {curtick}, curtime: {curtime:.3f}, next_tick: {next_tick}", bell=0)
                 log.debug(f"Before retrieve data, curtick: {curtick}", bell=0)
                 # play_pos = _sec2tick(curtime)
-                _mid_push_item( *_get_playable_data(curtick) )
-                # _deq_data.extend( _get_playable_data(curtick) )
+                _deq_push_item( *_get_playable_data(curtick) )
                 # log.debug(f"voici next_tick: {next_tick}")
-                log.debug(f"After retrieve data, curtick: {curtick}, len _deq_data: {len(_deq_data)}", bell=0)
-                if not _mid_is_pending():
+                log.debug(f"After retrieve data, curtick: {curtick},  _deq_data count: {_deq_count()}", bell=0)
+                if not _deq_is_pending():
                     self._count += 1
                     log.debug(f"No data retrieved from the playable, At curtick: {curtick}, next_tick: {next_tick}, _count: {self._count}")
-                if _mid_is_pending():
+                if _deq_is_pending():
                     if self._count: 
                         log.debug(f"There was data in the buffer, Total Count: {self._count}, at curtick: {curtick}", bell=0)
                     self._count =0
@@ -1064,18 +1060,18 @@ class MidiPlayer(object):
                 """
                 
                 # Sending ev
-                log.debug(f"Sending message, and Drain out _deq_data with len: {len(_deq_data)}, at reltime: {reltime:.3f},\n" 
+                log.debug(f"Sending message, and Drain out _deq_data with count: {_deq_count()}, at reltime: {reltime:.3f},\n" 
                         f"    curtick: {curtick}, curtime: {curtime:.3f}\n", bell=0)
                 """
                 while _deq_data:
                     msg_ev = _deq_data.popleft()
                     self.midi_man.send_imm(msg_ev.msg)
                 """
-                _mid_poll_out(extra_proc=None)
+
+                _deq_poll_out(extra_proc=None)
             
                 # Manage next events
-                if not _mid_is_pending():
-                # if not _deq_data:
+                if not _deq_is_pending():
                     log.debug(f"Now _deq_data is empty at curtick: {curtick}, next_tick:  {next_tick}", bell=0)
                     msg_ev = None
                     # Getting next tick
@@ -1100,7 +1096,7 @@ class MidiPlayer(object):
             # time.sleep(0.001)
 
         # Out of loop
-        log.debug(f"\nOut of loop, clearing _deq_data with len: {len(_deq_data)}")
+        log.debug(f"\nOut of loop, clearing _deq_data with count: {_deq_count()}")
         
         # Saving the curtime position
         last_tick = curtick # _sec2tick(curtime) # in tick

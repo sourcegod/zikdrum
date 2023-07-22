@@ -983,6 +983,17 @@ class MidiManager(object):
 
     #-----------------------------------------
 
+    def count(self):
+        """
+        Returns the length of _out_queue
+        from MidiManager object
+        """
+
+        return len(self._out_queue)
+
+    #-----------------------------------------
+
+
     def poll_out(self, extra_proc=None):
         """
         Poll out the _out_queue
