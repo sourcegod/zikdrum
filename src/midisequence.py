@@ -1465,7 +1465,7 @@ class MidiBase(object):
         from MidiBase object
         """
 
-        # debug("sec_per_tick: {}".format(self.sec_per_tick))
+        # debug(f"nb_tick: {nb_tick}, sec_per_tick: {self.sec_per_tick}")
         return float(nb_tick * self.sec_per_tick)
 
     #-----------------------------------------
@@ -1511,11 +1511,11 @@ class MidiBase(object):
         
         # self.numerator =4 # time signature
         # self.denominator =4 # time signature
-        # self.ppq = 120 # pulse per quarter, tick per beat
+        if self.ppq == 0: self.ppq = 120 # pulse per quarter, tick per beat
         self.bar = self.numerator * self.ppq # in ticks, cause ppq is also number of ticks_per_beat
         self.nb_beats = self.ppq * self.numerator # in ticks, cause ppq is also ticks_per_beat
         self.sec_per_beat = float(self.tempo / self.micro_sec) # 
-        self.sec_per_tick = float(self.sec_per_beat) / float(self.ppq)
+        self.sec_per_tick = float(self.sec_per_beat) / self.ppq
         self.tick_per_sec = round((1 / self.sec_per_beat) * self.ppq) # in tick
         # debug(self.tempo)
         # self.bpm = (self._tempo_ref / self.tempo)
@@ -2229,11 +2229,13 @@ class MidiSequence(object):
         from MidiSequence object
         """
 
-        if self.parent is None: return
+        """
+        # if self.parent is None: return
         state = self.parent._playing
         if state:
             # self.parent.stop_engine()
             pass
+        """
         
         if pos == -1: pos = self.curpos
         seq_len = self.get_length()
@@ -2243,9 +2245,12 @@ class MidiSequence(object):
         tim = self._timeline
         tim.update_track_pos(pos)
         self.curpos = pos
+        
+        """
         if state:
             # self.parent.start_midi_engine()
             pass
+        """
            
     #-----------------------------------------
 
@@ -3622,6 +3627,40 @@ class MidiSequence(object):
 
     #-----------------------------------------
 
+    def adjust_tempo(self, new_tempo, curtick):
+        """
+        Adjust the base tempo whether is necessary
+        Returns 1 for change, 0 for not
+        from MidiSequence object
+        """
+        ret =0        
+
+        old_tempo = self.base.tempo
+        # debug(f"old_tempo: {old_tempo}, new_tempo: {new_tempo}, curtick: {curtick}")
+        if old_tempo == new_tempo: return ret
+
+        """
+        # old_bpm = self.base.tempo2bpm(old_tempo)
+        # new_bpm = self.base.tempo2bpm(new_tempo)
+        diff_tempo =\
+                ( abs(old_tempo - new_tempo) ) / ( (old_tempo + new_tempo) / 2) * 100
+
+        # if curtick == 0 or abs(old_bpm - new_bpm) >= 10:
+        # if curtick == 0 or diff_tempo >= 5:
+        """
+
+        new_bpm = self.base.tempo2bpm(new_tempo)
+        self.base.tempo = new_tempo
+        self.base.update_tempo_params()
+        # debug(f"[Tempo_change]: {new_tempo}, new_bpm: {new_bpm:.3f}, at tick: {curtick}")
+        type = evq.EVENT_BPM_CHANGED
+        value = new_bpm
+        _evq_instance.push_event(type, value)
+        ret =1
+    
+        return ret
+
+    #-----------------------------------------
 
     def get_playable_data(self, curtick):
         """
@@ -3633,15 +3672,6 @@ class MidiSequence(object):
         log.debug(f"\nFunc: get_playable_data, at curtick: {curtick}", bell=0)
         # debug(f"\nFunc: get_playable_data, at curtick: {curtick}", bell=0)
         
-        """
-        if not self._bpm_changed and curtick >= 1024 * 4:
-            # log.debug(f"[bpm_change], at turtick: {curtick}")
-            type = evq.EVENT_BPM_CHANGED
-            value = 60
-            _evq_instance.push_event(type, value)
-            self._bpm_changed =1
-        """
-
         for (tracknum, track) in enumerate(self.track_lst):
             # Note: Used, when we have a list of group time, for playing in realtime
             ev_lst = track.search_ev_group_time(curtick)
@@ -3653,38 +3683,18 @@ class MidiSequence(object):
             else: 
                 log.debug(f"Len ev_lst: {len(ev_lst)},  at curtick: {curtick}, on tracknum {tracknum}", writing_file=True)
             """
-            if track.muted or track.sysmuted: continue
 
+            if track.muted or track.sysmuted: continue
             for (index, ev) in enumerate(ev_lst):
                 # log.debug(f"msg: {ev.msg}", writing_file=True)
                 # debug(f"msg: {ev.msg}", writing_file=True)
                 
-                """
-                if ev.msg.type == "set_tempo":
-                    tempo = self.base.tempo
-                    new_tempo = ev.msg.tempo
-                    # debug(f"old_tempo: {self.old_tempo}, new_tempo: {new_tempo}")
-                    bpm = self.base.tempo2bpm(new_tempo)
-                    if self.old_tempo == 0:
-                        self.old_tempo = tempo
-                        debug(f"[Old tempo_change]: {self.old_tempo}, bpm: {bpm:.3f}, at tick: {ev.msg.time}")
-                    old_bpm = self.base.tempo2bpm(self.old_tempo)
-                    if self.old_tempo != new_tempo and abs(old_bpm - bpm) >= 10:
-                    # if abs(self.old_tempo - new_tempo) >= 10000:
-                        self._last_pos = curtick
-                        self.old_tempo = new_tempo
-                        self.base.tempo = new_tempo
+                if ev.msg.type == "set_tempo": 
+                    if curtick == 0 or abs(curtick - self._last_pos) >= self.base.ppq: # Check tempo change at each beat
+                        if self.adjust_tempo(ev.msg.tempo, curtick):
+                            # self.set_position(curtick)
+                            self._last_pos = curtick
 
-                        # self.base.update_tempo_params()
-                        # msec = self.base.tick2sec(ev.msg.time)
-                        # bpm = self.base.tempo2bpm(self.old_tempo)
-                        # debug(f"[tempo_change]: {new_tempo}, bpm: {bpm:.3f}, at tick: {ev.msg.time}")
-                        type = evq.EVENT_BPM_CHANGED
-                        value = bpm
-                        _evq_instance.push_event(type, value)
-                """
-
-                # print(f"Type Set_tempo, tempo: {ev.msg.tempo}, bpm: {bpm:.3f}, msec: {msec:.3f}")
                 if ev.msg.type in self.base.playable_lst:
                     """
                     # not work
