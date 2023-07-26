@@ -998,7 +998,6 @@ class MidiManager(object):
 
     #-----------------------------------------
 
-
     def poll_out(self, extra_proc=None):
         """
         Poll out the _out_queue
@@ -1010,7 +1009,7 @@ class MidiManager(object):
         if extra_proc: pass # Note: TODO
         while self._out_queue: # _out_queue has item
             msg_ev = self._out_queue.popleft()
-            self._synth_obj.send_imm(msg_ev.msg)
+            self._synth_obj.send_imm(msg_ev)
 
     #-----------------------------------------
 

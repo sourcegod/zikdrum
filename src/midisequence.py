@@ -3707,6 +3707,8 @@ class MidiSequence(object):
                         pass
                     """
 
+                    """
+                    # Threre is no need to pass a MidiEvent, but only a MidiMessage
                     newev = MidiEvent()
                     newev.msg = ev.msg.copy()
                     newev.tracknum = tracknum
@@ -3715,7 +3717,11 @@ class MidiSequence(object):
                     # Not necessary
                     # msg.time = self.base.tick2sec(msg.time)
                     # log.debug("voici msg: {}".format(msg))
-                    msg_lst.append(newev)
+                    # msg_lst.append(newev)
+                    """
+
+                    msg = ev.msg.copy()
+                    msg_lst.append(msg)
              
         if not msg_lst:
             log.debug(f"No msg_lst, at curtick: {curtick}\n", bell=0)
