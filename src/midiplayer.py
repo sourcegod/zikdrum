@@ -184,7 +184,7 @@ class MidiPlayer(object):
         """
         self.init_pos()
         self.curseq.set_position(-1)
-        # self.reset_time()
+        # self.set_reltime()
         """
 
         if clicked:
@@ -217,7 +217,7 @@ class MidiPlayer(object):
         # self.curseq.update_bpm(bpm)
         if clicked:
             self.start_click()
-        self.reset_time()
+        self.set_reltime()
     
     #-----------------------------------------
 
@@ -737,7 +737,7 @@ class MidiPlayer(object):
 
     #-----------------------------------------
 
-    def reset_time(self, pos=-1):
+    def set_reltime(self, pos=-1):
         """
         resetting time parameters
         from MidiPlayer object
@@ -969,7 +969,7 @@ class MidiPlayer(object):
         next_tick =0
         next_time =0
         reltime =0 # relative clock timing
-        _tempo_changed =0
+        _bpm_changed =0
         _delay_time = self._delay_time
         if self.last_time == -1:
             self.set_last_time(curtime)
@@ -1055,7 +1055,7 @@ class MidiPlayer(object):
                                 f"    cur_reltime: {reltime:.3f}, curtime: {curtime:.3f}") 
                         """
 
-                        _tempo_changed =1
+                        _bpm_changed =1
                         # self._playing =0
                         # break
                 # """
@@ -1117,16 +1117,17 @@ class MidiPlayer(object):
                         
                     next_time = _tick2sec(next_tick)
                     log.debug(f"After forward timeline, next_tick: {next_tick}, next_time: {next_time:.3f}", bell=0)
-                    if _tempo_changed:
+                    if _bpm_changed:
                         old_reltime = reltime
                         jumptime = _tick2sec(curtick)
-                        reltime = self.reset_time(jumptime)
+                        reltime = self.set_reltime(jumptime)
+                        _bpm_changed =0
                         
                         """
                         debug(f"After Tempo changed: old_reltime: {old_reltime:.3f}, curtick: {curtick}, curtime: {curtime:.3f},\n"
                                 f"    new reltime: {reltime:.3f}, next_tick: {next_tick}, next_time: {next_time}")
                         """
-                        _tempo_changed =0
+
                     curtick = next_tick
                     curtime = next_time
                     # Saving the player position
