@@ -1518,7 +1518,7 @@ class MidiBase(object):
         self.sec_per_tick = float(self.sec_per_beat) / self.ppq
         self.tick_per_sec = round((1 / self.sec_per_beat) * self.ppq) # in tick
         # debug(self.tempo)
-        # self.bpm = (self._tempo_ref / self.tempo)
+        self.bpm = (self._tempo_ref / self.tempo)
 
     #-----------------------------------------
 
@@ -2240,7 +2240,9 @@ class MidiSequence(object):
         if pos == -1: pos = self.curpos
         seq_len = self.get_length()
         pos = limit_value(pos, 0, seq_len)
-        self.update_tracks_position(pos) 
+        self.update_tracks_position(pos)
+        ### Note: TODO: manage a tempo list to get bpm and tempo at each position
+        # self.base.update_tempo_params()
         # Sets the timeline position
         tim = self._timeline
         tim.update_track_pos(pos)
@@ -3089,7 +3091,7 @@ class MidiSequence(object):
 
     def change_event_tempo(self, tracknum, time, val):
         """
-        change event program on the track
+        change event tempo on the track
         from MidiSequence object
         """
 
@@ -3649,12 +3651,12 @@ class MidiSequence(object):
         # if curtick == 0 or diff_tempo >= 5:
         """
 
-        new_bpm = self.base.tempo2bpm(new_tempo)
         self.base.tempo = new_tempo
+        # Updating the tempo and bpm
         self.base.update_tempo_params()
         # debug(f"[Tempo_change]: {new_tempo}, new_bpm: {new_bpm:.3f}, at tick: {curtick}")
         type = evq.EVENT_BPM_CHANGED
-        value = new_bpm
+        value = self.base.bpm
         _evq_instance.push_event(type, value)
         ret =1
     
