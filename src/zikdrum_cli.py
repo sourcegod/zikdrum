@@ -103,6 +103,7 @@ class CommandApp(object):
                 ("goc", "tic", "gotick"): self.iap.set_position,
                 ("got", "tim", "sec", "gotime"): self.iap.goto_time,
                 ("gobt", "bet", "gobeat"): self.iap.goto_beat,
+                ("k",  "kli", "klick"): self.iap.toggle_click,
         }
 
         # dict list

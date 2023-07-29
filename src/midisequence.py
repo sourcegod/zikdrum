@@ -2113,7 +2113,7 @@ class MidiSequence(object):
 
         self.midi_man = midi_driver
         # generate data
-        self.gen_default_data()
+        self.click_track = self.gen_default_data()
         # pass the midi driver to all tracks
         for track in self.track_lst:
             track.midi_man = self.midi_man
@@ -3413,7 +3413,7 @@ class MidiSequence(object):
         ev_lst = []
         val =0
         tempo_track = None
-        self.click_track = None
+        click_track = None
         track_lst = self.get_tracks()
         numerator = self.base.numerator
         ppq = self.base.ppq
@@ -3450,11 +3450,11 @@ class MidiSequence(object):
                 ev_lst.append(evt)
 
 
-        self.click_track = MidiTrack()
-        self.click_track.add_evs(*ev_lst)
-        self.click_track.repeating =1
-        self.click_track.channel_num =9 # drums
-        track_lst.append(self.click_track)
+        click_track = MidiTrack()
+        click_track.add_evs(*ev_lst)
+        click_track.repeating =1
+        click_track.channel_num =9 # drums
+        track_lst.append(click_track)
         track = MidiTrack()
         track.add_evs(*ev_lst)
         track.channel_num =9 # drums
@@ -3463,8 +3463,9 @@ class MidiSequence(object):
         tempo = self.base.tempo
         bpm = self.base.tempo2bpm(tempo)
         self.set_bpm(bpm)
-
-        return self.click_track
+        self.track_lst[:] = track_lst
+        debug(f"voici len click_track: {len(click_track.ev_lst)}")
+        return click_track
 
     #-----------------------------------------
 
@@ -3521,14 +3522,14 @@ class MidiSequence(object):
         
         tracknum =0
         ev = self.click_track.get_ev()
-        if ev is None:
+        if ev is None or ev.msg.type not in self.base.playable_lst:
             ev = self.click_track.next_ev()
-        if ev is not None and ev.msg.type in self.base.playable_lst:
+        if ev and ev.msg.type in self.base.playable_lst:
             curmsg = ev.msg
             ev_group = self.click_track.search_ev_group(curmsg.time)
-            # print("voici click_msg: ", msg)
             if self.click_track.repeating:
                 repeat_count = self.click_track.repeat_count
+                # debug(f"repeat_count: {self.click_track.repeat_count}")
             # calculate relative time click position
             click_pos = curmsg.time + (nb_beats * repeat_count)
             
@@ -3552,7 +3553,7 @@ class MidiSequence(object):
                 newev.tracknum = tracknum
                 newev.msg.time = self.base.tick2sec(click_pos)
                 # debug("time: {}".format(msg.time))
-                ev_lst.append(newev)
+                ev_lst.append(newev.msg)
 
         return ev_lst
 
