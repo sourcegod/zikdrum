@@ -178,34 +178,6 @@ class MidiPlayer(object):
        
     #-----------------------------------------
 
-    def check_bpm(self):
-        if self._bpm_changed:
-            self.change_bpm(self._bpm)
-            self._bpm_changed =0
-            # debug(f"voici _bpm: {self._bpm}")
-            time.sleep(0.1)
-
-
-    #-----------------------------------------
-
-    def update_bpm(self, bpm):
-        """
-        Deprecated function
-        update the bpm (beat per minute) without changing tempo track
-        from MidiPlayer object
-        """
-
-        clicked =0
-        if self.is_clicking():
-            clicked =1
-            self.stop_click()
-        # self.curseq.update_bpm(bpm)
-        if clicked:
-            self.start_click()
-        self.set_reltime()
-    
-    #-----------------------------------------
-
     def play(self):
         """
         play midi events
@@ -318,9 +290,12 @@ class MidiPlayer(object):
             # self.stop_engine()
             # Note: Panic function is very important, to pause the Midi system
             self.midi_man.panic()
-            time.sleep(self._delay_time)
         if clicked:
             self.stop_click()
+        if played or clicked:
+            ### Note: Delay is necessary to pause the loop callback, and go out
+            time.sleep(self._delay_time)
+
         self.init_pos()
         self.curseq.set_position(pos)
         
