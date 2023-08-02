@@ -368,7 +368,6 @@ class MidiTrack(MidiChannel):
 
     #-----------------------------------------
 
-
     def get_length(self):
         """
         returns track length
@@ -466,7 +465,8 @@ class MidiTrack(MidiChannel):
         try:
             res = self.ev_lst[pos]
         except IndexError:
-            pass
+            # debug(f"Exception in get_ev, pos: {pos}, len ev_lst: {len(self.ev_lst)}")
+            return
 
         return res
 
@@ -568,7 +568,8 @@ class MidiTrack(MidiChannel):
             try:
                 res = self.ev_lst[self.pos]
             except IndexError:
-                pass
+                # debug(f"except in next_ev with pos: {self.pos}")
+                return
         elif self.pos >= len(self.ev_lst):
             if self.repeating:
                 self.pos =0
@@ -578,11 +579,10 @@ class MidiTrack(MidiChannel):
                     res = self.ev_lst[self.pos]
                     # debug("repeat count: {}".format(self.repeat_count))
                 except IndexError:
-                    pass
-            else:
+                    return
+            else: # Not repeating
                 self.pos = len(self.ev_lst)
                 # self.lastpos =-1
-
         return res
 
     #-----------------------------------------
@@ -608,9 +608,10 @@ class MidiTrack(MidiChannel):
         
         ev = self.next_ev()
         if ev is None\
-            or ev.msg.time >= self.ev_lst[-1].msg.time: 
+            or ev.msg.time > self.ev_lst[-1].msg.time:
+            # debug(f"Exception in next_ev_time, with time: {ev.msg.time}, on last time: {self.ev_lst[-1].msg.time}")
             return -1
-        
+        # debug(f"next_ev_time, index: {self.pos}, {ev.msg.time}, len ev_lst: {len(self.ev_lst)}")
         return ev.msg.time
 
     #-----------------------------------------
@@ -623,7 +624,6 @@ class MidiTrack(MidiChannel):
         """
 
         lst = []
-        
         if self.pos < len(self.ev_lst):
             while 1:
                 ev = self.get_ev()
@@ -642,6 +642,9 @@ class MidiTrack(MidiChannel):
                 else: # ev is None
                     self.ev_grouping =0
                     break
+        else:  # pos greater or equal to len ev_lst
+            debug(f"Pos on track: {self.pos}")
+            return []
         
         # print(f"voici len lst: {len(lst)}")
         # debug(f"voici len lst: {len(lst)}")
@@ -991,7 +994,8 @@ class MidiTrack(MidiChannel):
 
     def next_group_time(self):
         """
-        Sets next group pos and time 
+        Sets next group pos and time
+        Returns a tuple with index and time event on the track
         from MidiTrack object
         """
 
@@ -1032,6 +1036,7 @@ class MidiTrack(MidiChannel):
             ev = self.get_ev()
             if ev is None: break
             msg = ev.msg
+            ### TODO: msg.time must be exact equal to time (==) to be precise
             if msg.time >= self.lastpos and msg.time == time:
                 # debug(f"[DEBUG], search_group_time: track: {ev.tracknum}, pos: {self.pos}, msg time: {msg.time}, on time: {time}")
                 lst.append(ev)
@@ -1066,12 +1071,16 @@ class MidiTrack(MidiChannel):
         curtime =-1
         self.ev_lst.sort(key=lambda x: x.msg.time)
         # Note: FIXME, Deleting the doublon by time, not ideal but...
+        # """
         for ev in self.ev_lst:
             evtime = ev.msg.time
             if evtime != curtime:
                 lst.append(ev)
                 curtime = evtime
-        self.ev_lst = lst
+        self.ev_lst = lst[:] # for a shallow copy
+        # """
+
+
 
     #-----------------------------------------
      
@@ -1692,8 +1701,8 @@ class MidiMetronome(object):
         from metronome object
         """
 
-        if self._click_track:
-            self._click_track.set_active(0)
+        if self._click_track is None: return
+        self._click_track.set_active(0)
 
     #-----------------------------------------
 
@@ -2168,7 +2177,6 @@ class MidiSequence(object):
                     curtime = evtime
                     total_count +=1
             # """
- 
   
             """
             tim.add_evs(*track.ev_lst)
@@ -2184,22 +2192,36 @@ class MidiSequence(object):
 
         # Keeping index of grouping event
         # generate group position for the timeline
-        tim.gen_group_pos()
+        # tim.gen_group_pos()
         # Or generate tuple of uniq index and time for group event
         tim.gen_group_time()
+        # show the results
+        if _DEBUG: self.print_timeline_evs()
+        if debugging: _DEBUG =1
+
+    #-----------------------------------------
+    
+    def print_timeline_evs(self):
+        """
+        Dump events from Timeline
+        from MidiSequence object
+        """
+        tim = self._timeline
+        # Show the results
+        total_count = len(tim.ev_lst)
+        nb_ev = 2000
         count = tim.count()
         if count:
             first_tick = tim.ev_lst[0].msg.time
             last_tick = tim.ev_lst[-1].msg.time
-            debug(f"Timeline count: {count}, / total_count: {total_count}, first_tick: {first_tick}, last_tick: {last_tick}", writing_file=True)
-        # Show the results
-        nb_ev = 100
-        debug(f"First {nb_ev} items in timeline in ev_lst", writing_file=True)
-        ev_lst = tim.get_list()
-        for i, ev in enumerate(ev_lst[:nb_ev]): debug(f"{i}, tick: {ev.msg.time}, tracknum: {ev.tracknum}", writing_file=True)
-        debug(f"\nGroup Event Position time count: {len(tim.group_time_lst)}", writing_file=True)
-        for (i, item) in enumerate(tim.group_time_lst[:nb_ev]): debug(f"index Group: {i}, Pos: {item[0]}, Tick: {item[1]}", writing_file=True)
-        if debugging: _DEBUG =1
+            debug(f"Timeline count: {count}, / total_count: {total_count}, first_tick: {first_tick}, last_tick: {last_tick}")
+        debug(f"First {nb_ev} items in timeline in ev_lst")
+        # ev_lst = tim.get_list()
+        ev_lst = tim.ev_lst
+        for (i, ev) in enumerate(ev_lst[:nb_ev]): debug(f"{i}, tick: {ev.msg.time}, tracknum: {ev.tracknum}")
+        
+        debug(f"\nGroup Event Position time count: {len(tim.group_time_lst)}")
+        for (i, item) in enumerate(tim.group_time_lst[:nb_ev]): debug(f"index Group: {i}, Pos: {item[0]}, Tick: {item[1]}")
 
     #-----------------------------------------
 
@@ -3340,7 +3362,8 @@ class MidiSequence(object):
             # self.gen_tempo_track()
             # dont loop
             self.set_looping(0)
-            self.tools.adjust_tracks(self.track_lst)
+            # Not needing with timeline track
+            # self.tools.adjust_tracks(self.track_lst)
  
         # debug(f"voici patch_num: {patch_num}, channel_num: {channel_num}")
         return res
@@ -3454,7 +3477,7 @@ class MidiSequence(object):
         click_track.add_evs(*ev_lst)
         click_track.repeating =1
         click_track.channel_num =9 # drums
-        track_lst.append(click_track)
+        # track_lst.append(click_track)
         track = MidiTrack()
         track.add_evs(*ev_lst)
         track.channel_num =9 # drums
@@ -3463,8 +3486,8 @@ class MidiSequence(object):
         tempo = self.base.tempo
         bpm = self.base.tempo2bpm(tempo)
         self.set_bpm(bpm)
-        self.track_lst[:] = track_lst
-        debug(f"voici len click_track: {len(click_track.ev_lst)}")
+        # self.track_lst = track_lst
+        # debug(f"voici len click_track: {len(click_track.ev_lst)}")
         return click_track
 
     #-----------------------------------------
@@ -3672,11 +3695,13 @@ class MidiSequence(object):
         """
 
         msg_lst = []
-        log.debug(f"\nFunc: get_playable_data, at curtick: {curtick}", bell=0)
-        # debug(f"\nFunc: get_playable_data, at curtick: {curtick}", bell=0)
+        # log.debug(f"\nFunc: get_playable_data, at curtick: {curtick}", bell=0)
+        # debug(f"\nFunc: get_playable_data, at curtick: {curtick}")
+        # """
+        # if self._playing and _is_running():
         
         for (tracknum, track) in enumerate(self.track_lst):
-            # Note: Used, when we have a list of group time, for playing in realtime
+            # Note: search_ev_group_time func is used, when we have a list of group time, for playing in realtime
             ev_lst = track.search_ev_group_time(curtick)
             # ev_lst = track.search_ev_group(curtick)
             
@@ -3690,24 +3715,23 @@ class MidiSequence(object):
             if track.muted or track.sysmuted: continue
             for (index, ev) in enumerate(ev_lst):
                 # log.debug(f"msg: {ev.msg}", writing_file=True)
-                # debug(f"msg: {ev.msg}", writing_file=True)
+                # debug(f"msg on track {tracknum}: {ev.msg}")
                 
+                """
+                if ev.msg.type == "end_of_track": 
+                    debug(f"End Of Track, on track: {tracknum}")
+                    break
+                """
+                
+                # """
                 if ev.msg.type == "set_tempo": 
                     if curtick == 0 or abs(curtick - self._last_pos) >= self.base.ppq: # Check tempo change at each beat
                         if self.adjust_tempo(ev.msg.tempo, curtick):
                             # self.set_position(curtick)
                             self._last_pos = curtick
+                # """
 
                 if ev.msg.type in self.base.playable_lst:
-                    """
-                    # not work
-                    if self.base.tempo != self.old_tempo:
-                        self.base.tempo = self.old_tempo
-                        # self.base.update_tempo_params()
-                        # self.set_position(-1)
-                        pass
-                    """
-
                     """
                     # Threre is no need to pass a MidiEvent, but only a MidiMessage
                     newev = MidiEvent()
@@ -3726,6 +3750,7 @@ class MidiSequence(object):
              
         if not msg_lst:
             log.debug(f"No msg_lst, at curtick: {curtick}\n", bell=0)
+            # debug(f"No msg_lst, at curtick: {curtick}\n")
         else:
             log.debug(f"msg_lst len: {len(msg_lst)}, at curtick: {curtick}\n", bell=0)
        

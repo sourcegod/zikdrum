@@ -726,14 +726,15 @@ class MidiManager(object):
     #-----------------------------------------
 
 
-    def send_imm(self, msg):
+    def send_imm(self, *msg_lst):
         """
         distinguishing message channel
         Send immediately messages without test
         from MidiManager object
         """
         
-        self._synth_obj.send_imm(msg)
+        for msg in msg_lst:
+            self._synth_obj.send_imm(msg)
 
     #-----------------------------------------
 
