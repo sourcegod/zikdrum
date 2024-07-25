@@ -1259,7 +1259,7 @@ class InterfaceApp(object):
         """
 
         if self.select.unselect_cur_track():
-            tracknum = self.cur_seq.get_tracknum()
+            tracknum = self.curseq.get_tracknum()
             msg = "Unselect current track: {}".format(tracknum)
         else:
             msg = "No track unselected"
