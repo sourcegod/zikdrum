@@ -1032,15 +1032,24 @@ class InterfaceApp(object):
         changing track number from the sequencer
         from InterfaceApp object
         """
-
-        tracknum = self.curseq.change_tracknum(step, adding)
-        track = self.curseq.get_track(tracknum)
-        track_name = track.track_name
-        instrument_name = track.instrument_name
-        if track_name:
-            self.msg_app = "{}: {} - {}".format(tracknum, track_name, instrument_name)
+        
+        tracknum =0
+        track_name = ""
+        instrument_name = ""
+        
+        if self.curseq.get_nb_tracks() <= 1:
+            uti.beep()
         else:
-            self.msg_app = "{}: Track {}".format(tracknum, tracknum)
+            tracknum = self.curseq.change_tracknum(step, adding)
+            track = self.curseq.get_track(tracknum)
+            if track is not None:
+                track_name = track.track_name
+                instrument_name = track.instrument_name
+
+        if track_name:
+            self.msg_app = f"{tracknum}: {track_name} - {instrument_name}"
+        else:
+            self.msg_app = f"{tracknum}: Track {tracknum}"
         
         self.notify(self.msg_app)
         

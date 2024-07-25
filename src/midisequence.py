@@ -2670,10 +2670,16 @@ class MidiSequence(object):
         from MidiSequence object
         """
         
+        if len(self.track_lst) <= 1: 
+            beep()
+            return 0
         # getting any track object
         track = self.get_track(0)
         self.tracknum = track.change_item(self.tracknum, self.track_lst, step, adding, min_val=1, max_val=-1)
         track = self.get_track(self.tracknum)
+        if track is None:
+            beep()
+            return self.tracknum
         channel_num = track.channel_num
         track.select_channel(step=channel_num, adding=0)
         
